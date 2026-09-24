@@ -87,6 +87,17 @@ If the compilation is successful, a debug APK will be generated somewhere inside
 
 The APK can be installed using the tool `adb`, which should have been automatically installed at `/opt/android-sdk/platform-tools/adb` during compilation of the project.
 
+## Building from a Git worktree in this fork
+
+Create a branch and worktree with `git worktree add -b codex/my-feature <path> dev`.
+In the new worktree, run `source tools/dev-env.sh` before `./gradlew`. The script
+automatically finds a JDK 17 and Android SDK 36 in the main checkout's ignored
+`.local-dev/` directory; no worktree-specific symlinks are needed. A worktree's
+own `.local-dev/` takes precedence when present. If neither checkout has the
+tools, install them as described above and set `JAVA_HOME` and `ANDROID_HOME` or
+`ANDROID_SDK_ROOT`. The script leaves `GRADLE_USER_HOME` alone, so Gradle keeps
+using your configured or default dependency cache.
+
 ## Automatic backups in this fork
 
 After the app is opened once, Android schedules background checks about twice
