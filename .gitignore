@@ -20,5 +20,6 @@ crowdin.yml
 kotlin-js-store
 *.md
 !/AGENTS.md
+!/.agents/skills/**/SKILL.md
 .kotlin
 .local-dev/
