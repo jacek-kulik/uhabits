@@ -23,7 +23,7 @@ After installation, launch Android Studio. If this is the first time you launch 
 
 To create a complete copy of the source code repository, open the terminal (Linux/macOS) or Git Bash (Windows), navigate to the desired folder, then run:
 ```bash
-git clone https://github.com/iSoron/uhabits.git
+git clone https://github.com/jacek-kulik/uhabits.git
 ```
 The repository will be downloaded to the directory `uhabits`.
 
@@ -70,18 +70,25 @@ export PATH="$PATH:$ANDROID_HOME/platform-tools"
 yes | sdkmanager --licenses
 ```
 
+Install the Android SDK platform used by this fork:
+
+```bash
+sdkmanager "platforms;android-36"
+```
+
 ### Step 3: Download the source code
 
 To create a complete copy of the source code repository, navigate to your home directory and run:
 ```bash
-git clone https://github.com/iSoron/uhabits.git
+git clone https://github.com/jacek-kulik/uhabits.git
 ```
 The repository will be downloaded to the directory `uhabits`.
 
 ### Step 4: Compile the source code
 
 1. Navigate to the directory `uhabits`
-2. Run `./gradlew assembleDebug --stacktrace`
+2. Run `source tools/dev-env.sh` to select JDK 17 and Android SDK platform 36.
+3. Run `./gradlew :uhabits-android:assembleDebug --stacktrace`
 
 If the compilation is successful, a debug APK will be generated somewhere inside the folder `uhabits-android/build/`. Currently, the full path is `./uhabits-android/build/outputs/apk/debug/uhabits-android-debug.apk`, but it may change in the future.
 

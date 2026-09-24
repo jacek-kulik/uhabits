@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Personal fork
+
+- Build the debug app as **Habits Dev** with a separate app ID, so it can run
+  alongside the original app without sharing its data.
+- Add daily automatic database backups with retention of the five newest copies
+  per install and folder; allow choosing a public backup folder.
+- Add **Save to device** for database and CSV exports, in addition to sharing.
+- Keep partially completed at-least numerical habits visible when hiding entered
+  habits, and hide skipped numerical habits with that filter.
+- Add JDK 17 / Android SDK 36 development setup and worktree toolchain support.
+
+The entries below also include changes inherited from the original project.
+
 ### Added
 
 - Add habit search that filters by name, question and notes (@I-Dont-Remember, #2338)
@@ -20,6 +33,8 @@
 - Support content URIs when sharing backup files (@iSoron, 4383b3ed)
 - Fix frequency chart rendering random data in production (@TangilHossain, #2242)
 - Fix ripple effect on pure-dark mode and navigation bar insets on settings screen (@Vladuken, #2219)
+- Apply the bottom system inset on the edit-habit screen and fix widget picker
+  dialog styling (@iSoron, #2342, #2341)
 
 ### Refactoring & Testing
 
