@@ -19,6 +19,7 @@
 
 package org.isoron.uhabits.database
 
+import android.database.sqlite.SQLiteDatabase
 import org.isoron.platform.time.DateUtils
 import org.isoron.uhabits.AndroidDirFinder
 import org.isoron.uhabits.BaseAndroidTest
@@ -29,16 +30,49 @@ import java.io.FileOutputStream
 class AutoBackupTest : BaseAndroidTest() {
     @Test
     fun testRun() {
-        DateUtils.setFixedLocalTime(40 * DateUtils.DAY_LENGTH)
         val basedir = AndroidDirFinder(targetContext).getFilesDir("Backups")!!
-        createTestFiles(basedir, 30)
+        removeAllFiles(basedir)
+        val prefix = BackupPolicy.prefix(targetContext.packageName, automatic = true)
+        val oldFiles = (1..6).map { k ->
+            File(basedir, "$prefix test-$k.db").apply {
+                FileOutputStream(this).close()
+                setLastModified(DateUtils.DAY_LENGTH * k)
+            }
+        }
+        val manual = File(
+            basedir,
+            "${BackupPolicy.prefix(targetContext.packageName, automatic = false)} manual.db"
+        )
+        val otherPackage = if (targetContext.packageName.endsWith(".dev")) {
+            "org.isoron.uhabits"
+        } else {
+            "org.isoron.uhabits.dev"
+        }
+        val otherInstall = File(
+            basedir,
+            "${BackupPolicy.prefix(otherPackage, automatic = true)} other.db"
+        )
+        val unrelated = File(basedir, "notes.txt")
+        listOf(manual, otherInstall, unrelated).forEach { FileOutputStream(it).close() }
 
         val autoBackup = AutoBackup(targetContext)
         autoBackup.run(keep = 5)
 
-        for (k in 1..25) assertDoesNotExist("${basedir.path}/test-$k.txt")
-        for (k in 26..30) assertExists("${basedir.path}/test-$k.txt")
-        assertExists("${basedir.path}/Loop Habits Backup 1970-02-10 000000.db")
+        oldFiles.take(2).forEach { assertFalse(it.exists()) }
+        oldFiles.drop(2).forEach { assertTrue(it.exists()) }
+        listOf(manual, otherInstall, unrelated).forEach { assertTrue(it.exists()) }
+
+        val backups = basedir.listFiles()!!.filter {
+            BackupPolicy.pattern(targetContext.packageName).matches(it.name)
+        }
+        assertEquals(5, backups.size)
+        val latest = backups.maxBy { it.lastModified() }
+        SQLiteDatabase.openDatabase(latest.path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
+            db.rawQuery("PRAGMA quick_check", null).use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("ok", cursor.getString(0))
+            }
+        }
     }
 
     @Test
@@ -47,30 +81,12 @@ class AutoBackupTest : BaseAndroidTest() {
         removeAllFiles(basedir)
         basedir.delete()
 
-        // Should not crash
         val autoBackup = AutoBackup(targetContext)
         autoBackup.run()
-    }
-
-    private fun assertExists(path: String) {
-        assertTrue("File $path should exist", File(path).exists())
-    }
-
-    private fun assertDoesNotExist(path: String) {
-        assertFalse("File $path should not exist", File(path).exists())
-    }
-
-    private fun createTestFiles(basedir: File, nfiles: Int) {
-        removeAllFiles(basedir)
-        for (k in 1..nfiles) {
-            touch("${basedir.path}/test-$k.txt", DateUtils.DAY_LENGTH * k)
+        val backupCount = basedir.listFiles()!!.count {
+            BackupPolicy.pattern(targetContext.packageName).matches(it.name)
         }
-    }
-
-    private fun touch(path: String, time: Long) {
-        val file = File(path)
-        FileOutputStream(file).close()
-        file.setLastModified(time)
+        assertEquals(1, backupCount)
     }
 
     private fun removeAllFiles(dir: File) {

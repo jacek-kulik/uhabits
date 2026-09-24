@@ -142,6 +142,12 @@
                 android:summary="@string/no_public_backup_folder_selected"
                 app:iconSpaceReserved="false" />
 
+        <Preference
+                android:title="@string/automatic_backups"
+                android:summary="@string/automatic_backups_summary"
+                android:selectable="false"
+                app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

@@ -24,16 +24,18 @@ import android.net.Uri
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
-import org.isoron.platform.time.DateUtils
 import org.isoron.uhabits.AndroidDirFinder
 import org.isoron.uhabits.utils.DatabaseUtils
 import java.io.File
+import java.io.IOException
+import java.io.InterruptedIOException
 
 class AutoBackup(private val context: Context) {
 
-    private val backupPattern = Regex("^Loop Habits Backup .+\\.db$")
+    private val backupPattern = BackupPolicy.pattern(context.packageName)
 
-    fun run(keep: Int = 5) {
+    fun run(keep: Int = 5) = synchronized(lock) {
+        if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Backup interrupted")
         Log.i("AutoBackup", "Starting automatic backups...")
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         val uriString = prefs.getString("publicBackupFolder", null)
@@ -44,56 +46,47 @@ class AutoBackup(private val context: Context) {
             } else {
                 DocumentFile.fromFile(File(uri.path!!))
             }
-            if (dir != null) {
-                runInPublicDir(dir, keep)
-                return
-            }
+            if (dir == null) throw IOException("Backup folder is unavailable")
+            runInPublicDir(dir, keep)
+            return@synchronized
         }
 
-        val basedir = AndroidDirFinder(context).getFilesDir("Backups") ?: return
+        val basedir = AndroidDirFinder(context).getFilesDir("Backups")
+            ?: throw IOException("Private backup folder is unavailable")
         runInPrivateDir(basedir, keep)
     }
 
     private fun runInPrivateDir(dir: File, keep: Int) {
-        val files = dir.listFiles()?.toMutableList() ?: mutableListOf()
-        files.sortBy { it.lastModified() }
-        val newestTimestamp = files.lastOrNull()?.lastModified() ?: 0L
-        removeOldestPrivate(files, keep)
-        val now = DateUtils.getLocalTime()
-        if (now - newestTimestamp > DateUtils.DAY_LENGTH) {
-            DatabaseUtils.saveDatabaseCopy(context, dir)
-        } else {
-            Log.i("AutoBackup", "Fresh backup found (timestamp=$newestTimestamp)")
+        val files = dir.listFiles()?.filter { it.isFile && backupPattern.matches(it.name) }
+            ?: throw IOException("Cannot list private backup folder")
+        val newestTimestamp = files.maxOfOrNull { it.lastModified() }
+        if (!BackupPolicy.isDue(newestTimestamp, System.currentTimeMillis())) return
+
+        DatabaseUtils.saveDatabaseCopy(context, dir, automatic = true)
+        val current = dir.listFiles()?.filter { it.isFile && backupPattern.matches(it.name) }
+            ?: throw IOException("Cannot list private backup folder")
+        if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Backup interrupted")
+        BackupPolicy.toRemove(current, keep) { it.lastModified() }.forEach { file ->
+            if (!file.delete()) Log.e("AutoBackup", "Could not remove old backup: $file")
         }
     }
 
     private fun runInPublicDir(dir: DocumentFile, keep: Int) {
         val files = dir.listFiles()
             .filter { it.isFile && it.name?.matches(backupPattern) == true }
-            .sortedBy { it.lastModified() }
-        val newestTimestamp = files.lastOrNull()?.lastModified() ?: 0L
-        removeOldestPublic(files, keep)
-        val now = DateUtils.getLocalTime()
-        if (now - newestTimestamp > DateUtils.DAY_LENGTH) {
-            DatabaseUtils.saveDatabaseCopy(context, dir)
-        } else {
-            Log.i("AutoBackup", "Fresh backup found (timestamp=$newestTimestamp)")
+        val newestTimestamp = files.maxOfOrNull { it.lastModified() }
+        if (!BackupPolicy.isDue(newestTimestamp, System.currentTimeMillis())) return
+
+        DatabaseUtils.saveDatabaseCopy(context, dir, automatic = true)
+        val current = dir.listFiles()
+            .filter { it.isFile && it.name?.matches(backupPattern) == true }
+        if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Backup interrupted")
+        BackupPolicy.toRemove(current, keep) { it.lastModified() }.forEach { file ->
+            if (!file.delete()) Log.e("AutoBackup", "Could not remove old backup: ${file.uri}")
         }
     }
 
-    private fun removeOldestPrivate(files: List<File>, keep: Int) {
-        for (k in 0 until (files.size - keep)) {
-            val file = files[k]
-            Log.i("AutoBackup", "Removing $file")
-            file.delete()
-        }
-    }
-
-    private fun removeOldestPublic(files: List<DocumentFile>, keep: Int) {
-        for (k in 0 until (files.size - keep)) {
-            val file = files[k]
-            Log.i("AutoBackup", "Removing ${file.uri}")
-            file.delete()
-        }
+    companion object {
+        private val lock = Any()
     }
 }

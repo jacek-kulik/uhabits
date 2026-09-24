@@ -86,3 +86,25 @@ The repository will be downloaded to the directory `uhabits`.
 If the compilation is successful, a debug APK will be generated somewhere inside the folder `uhabits-android/build/`. Currently, the full path is `./uhabits-android/build/outputs/apk/debug/uhabits-android-debug.apk`, but it may change in the future.
 
 The APK can be installed using the tool `adb`, which should have been automatically installed at `/opt/android-sdk/platform-tools/adb` during compilation of the project.
+
+## Automatic backups in this fork
+
+After the app is opened once, Android schedules background checks about twice
+a day. A backup is made once the newest automatic copy is at least 24 hours
+old. The checks can run later if the device delays background work. The app
+also checks for a due backup whenever the habit list is opened. No network
+connection is required.
+
+By default, backups are stored in the app-specific `Backups` directory and are
+removed when the app is uninstalled. To keep them after uninstalling, choose
+**Settings → Database → Select public backup folder**. Use a different folder
+from the Play Store app. The Dev build names its automatic files `Loop Habits
+Dev Auto Backup … .db`, so it does not rotate the Play app's files even if the
+folders are accidentally shared. Still, separate folders are safer and easier
+to inspect. Copy important backups off the device as well.
+
+The app retains the five newest automatic backups for each install and folder.
+It checks a database snapshot before publishing a new file and removes older
+backups only after the new file is complete. Manual exports are separate. To
+restore, use **Settings → Database → Import data** and select a backup copy.
+Test restoration with a copy in the Dev app before relying on it.
