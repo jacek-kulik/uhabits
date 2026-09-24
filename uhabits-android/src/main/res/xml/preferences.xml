@@ -142,6 +142,12 @@
                 android:summary="@string/no_public_backup_folder_selected"
                 app:iconSpaceReserved="false" />
 
+        <Preference
+                android:title="@string/automatic_backups"
+                android:summary="@string/automatic_backups_summary"
+                android:selectable="false"
+                app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -179,13 +185,9 @@
         </Preference>
 
         <Preference
+                android:key="about"
                 android:title="@string/about"
-                app:iconSpaceReserved="false">
-            <intent
-                    android:action="android.intent.action.VIEW"
-                    android:targetClass="org.isoron.uhabits.activities.about.AboutActivity"
-                    android:targetPackage="org.isoron.uhabits" />
-        </Preference>
+                app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 

@@ -29,7 +29,7 @@
         android:allowBackup="true"
         android:backupAgent=".HabitsBackupAgent"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/main_activity_title"
+        android:label="${mainActivityLabel}"
         android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/AppBaseTheme">
@@ -49,16 +49,16 @@
         <activity
             android:name=".activities.habits.list.ListHabitsActivity"
             android:exported="true"
-            android:label="@string/main_activity_title"
+            android:label="${mainActivityLabel}"
             android:launchMode="singleTop" />
 
         <activity-alias
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/main_activity_title"
+            android:label="${mainActivityLabel}"
             android:launchMode="singleTop"
             android:targetActivity=".activities.habits.list.ListHabitsActivity">
-            <intent-filter android:label="@string/main_activity_title">
+            <intent-filter android:label="${mainActivityLabel}">
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
@@ -79,6 +79,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.habits.list.ListHabitsActivity" />
         </activity>
+
+        <activity
+            android:name=".utils.SaveExportActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode" />
 
         <activity
             android:name=".activities.intro.IntroActivity"
@@ -218,6 +224,11 @@
             </intent-filter>
         </receiver>
 
+        <service
+            android:name=".database.DailyBackupJobService"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <receiver android:name=".receivers.WidgetReceiver"
             android:exported="true"
             android:permission="false">
@@ -225,7 +236,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="org.isoron.uhabits.ACTION_SET_NUMERICAL_VALUE" />
                 <data
-                    android:host="org.isoron.uhabits"
+                    android:host="${applicationId}"
                     android:scheme="content" />
             </intent-filter>
             <intent-filter>
@@ -234,7 +245,7 @@
                 <action android:name="org.isoron.uhabits.ACTION_TOGGLE_REPETITION" />
 
                 <data
-                    android:host="org.isoron.uhabits"
+                    android:host="${applicationId}"
                     android:scheme="content" />
             </intent-filter>
             <intent-filter>
@@ -243,7 +254,7 @@
                 <action android:name="org.isoron.uhabits.ACTION_ADD_REPETITION" />
 
                 <data
-                    android:host="org.isoron.uhabits"
+                    android:host="${applicationId}"
                     android:scheme="content" />
             </intent-filter>
             <intent-filter>
@@ -252,7 +263,7 @@
                 <action android:name="org.isoron.uhabits.ACTION_REMOVE_REPETITION" />
 
                 <data
-                    android:host="org.isoron.uhabits"
+                    android:host="${applicationId}"
                     android:scheme="content" />
             </intent-filter>
         </receiver>
@@ -279,7 +290,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="org.isoron.uhabits"
+            android:authorities="${applicationId}"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

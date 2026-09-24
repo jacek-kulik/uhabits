@@ -41,6 +41,7 @@ import org.isoron.uhabits.core.tasks.TaskRunner
 import org.isoron.uhabits.core.ui.ThemeSwitcher.Companion.THEME_DARK
 import org.isoron.uhabits.core.utils.MidnightTimer
 import org.isoron.uhabits.database.AutoBackup
+import org.isoron.uhabits.database.DailyBackupScheduler
 import org.isoron.uhabits.inject.HabitsActivityComponent
 import org.isoron.uhabits.inject.HabitsApplicationComponent
 import org.isoron.uhabits.inject.create
@@ -80,6 +81,7 @@ class ListHabitsActivity : AppCompatActivity(), Preferences.Listener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DailyBackupScheduler.schedule(this)
 
         appComponent = (applicationContext as HabitsApplication).component
         component = HabitsActivityComponent::class.create(
@@ -139,9 +141,13 @@ class ListHabitsActivity : AppCompatActivity(), Preferences.Listener {
         taskRunner.run {
             try {
                 AutoBackup(this@ListHabitsActivity).run()
+            } catch (e: Exception) {
+                Log.e("ListHabitsActivity", "Automatic backup failed", e)
+            }
+            try {
                 appComponent.widgetUpdater.updateWidgets()
             } catch (e: Exception) {
-                Log.e("ListHabitActivity", "TaskRunner failed", e)
+                Log.e("ListHabitsActivity", "Widget update failed", e)
             }
         }
         if (prefs.theme == THEME_DARK && prefs.isPureBlackEnabled != pureBlack) {

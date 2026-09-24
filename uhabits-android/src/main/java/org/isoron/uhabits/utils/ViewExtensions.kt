@@ -44,6 +44,7 @@ import android.widget.RelativeLayout.ALIGN_PARENT_TOP
 import android.widget.RelativeLayout.BELOW
 import android.widget.TextView
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.FileProvider
@@ -119,17 +120,30 @@ fun Activity.showMessage(msg: String) {
 }
 
 fun Activity.showSendFileScreen(archiveFilename: String) {
+    AlertDialog.Builder(this)
+        .setTitle(R.string.export)
+        .setItems(arrayOf(getString(R.string.save_to_device), getString(R.string.share_export))) { _, option ->
+            if (option == 0) {
+                startActivity(Intent(this, SaveExportActivity::class.java).putExtra(SaveExportActivity.EXTRA_SOURCE, archiveFilename))
+            } else {
+                shareExportFile(archiveFilename)
+            }
+        }
+        .show()
+}
+
+private fun Activity.shareExportFile(archiveFilename: String) {
     val uri = Uri.parse(archiveFilename)
     val fileUri = if (uri.scheme == "content") {
         uri
     } else {
         val file = if (uri.scheme == "file") File(uri.path!!) else File(archiveFilename)
-        FileProvider.getUriForFile(this, "org.isoron.uhabits", file)
+        FileProvider.getUriForFile(this, packageName, file)
     }
     this.startActivitySafely(
         Intent().apply {
             action = Intent.ACTION_SEND
-            type = "application/zip"
+            type = exportMimeType(archiveFilename)
             putExtra(Intent.EXTRA_STREAM, fileUri)
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }

@@ -27,10 +27,14 @@ import org.isoron.uhabits.HabitsApplication.Companion.isTestMode
 import org.isoron.uhabits.HabitsDatabaseOpener
 import org.isoron.uhabits.core.DATABASE_FILENAME
 import org.isoron.uhabits.core.DATABASE_VERSION
+import org.isoron.uhabits.database.BackupPolicy
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
-import java.text.SimpleDateFormat
+import java.io.InputStream
+import java.io.InterruptedIOException
+import java.io.OutputStream
 
 object DatabaseUtils {
     private var opener: HabitsDatabaseOpener? = null
@@ -59,32 +63,113 @@ object DatabaseUtils {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun saveDatabaseCopy(context: Context, dir: File): String {
-        val dateFormat: SimpleDateFormat = getBackupDateFormat()
-        val date = dateFormat.format(System.currentTimeMillis())
-        val filename = "${dir.absolutePath}/Loop Habits Backup $date.db"
-        Log.i("DatabaseUtils", "Writing: $filename")
-        val db = getDatabaseFile(context)
-        val dbCopy = File(filename)
-        db.copyTo(dbCopy)
-        return dbCopy.absolutePath
+    fun saveDatabaseCopy(context: Context, dir: File, automatic: Boolean = false): String {
+        val name = backupFilename(context, automatic)
+        val destination = File(dir, name)
+        if (destination.exists()) throw IOException("Backup already exists: $destination")
+        val snapshot = createDatabaseSnapshot(context)
+        var pending: File? = null
+        try {
+            pending = File.createTempFile(".loop-backup-", ".pending", dir)
+            copyAndSync(snapshot, pending)
+            if (!pending.renameTo(destination)) throw IOException("Cannot publish backup: $destination")
+            Log.i("DatabaseUtils", "Wrote: $destination")
+            return destination.absolutePath
+        } finally {
+            pending?.delete()
+            snapshot.delete()
+        }
     }
 
     @JvmStatic
     @Throws(IOException::class)
-    fun saveDatabaseCopy(context: Context, dir: DocumentFile): String {
-        val dateFormat: SimpleDateFormat = getBackupDateFormat()
-        val date = dateFormat.format(System.currentTimeMillis())
-        val file = dir.createFile("application/octet-stream", "Loop Habits Backup $date.db")
-            ?: throw IOException("Unable to create backup file")
-        Log.i("DatabaseUtils", "Writing: ${file.uri}")
-        val db = getDatabaseFile(context)
-        FileInputStream(db).use { input ->
-            context.contentResolver.openOutputStream(file.uri)?.use { output ->
-                input.copyTo(output)
+    fun saveDatabaseCopy(context: Context, dir: DocumentFile, automatic: Boolean = false): String {
+        val name = backupFilename(context, automatic)
+        if (dir.findFile(name) != null) throw IOException("Backup already exists: $name")
+        val snapshot = createDatabaseSnapshot(context)
+        var pending: DocumentFile? = null
+        try {
+            pending = dir.createFile("application/octet-stream", "$name.pending")
+                ?: throw IOException("Unable to create backup file")
+            FileInputStream(snapshot).use { input ->
+                val output = context.contentResolver.openOutputStream(pending.uri, "w")
+                    ?: throw IOException("Unable to write backup file")
+                output.use {
+                    copyWithCancellation(input, it)
+                }
+            }
+            if (!pending.renameTo(name)) throw IOException("Unable to publish backup file")
+            if (pending.name != name) throw IOException("Backup file has an unexpected name")
+            Log.i("DatabaseUtils", "Wrote: ${pending.uri}")
+            return pending.uri.toString()
+        } catch (e: Exception) {
+            pending?.delete()
+            if (e is IOException) throw e
+            throw IOException("Could not write backup file", e)
+        } finally {
+            snapshot.delete()
+        }
+    }
+
+    private fun backupFilename(context: Context, automatic: Boolean): String {
+        val date = getBackupDateFormat().format(System.currentTimeMillis())
+        return "${BackupPolicy.prefix(context.packageName, automatic)} $date.db"
+    }
+
+    private fun createDatabaseSnapshot(context: Context): File {
+        if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Backup interrupted")
+        val source = getDatabaseFile(context)
+        if (!source.isFile) throw IOException("Database file does not exist")
+        val snapshot = File.createTempFile("loop-backup-", ".db", context.cacheDir)
+        try {
+            SQLiteDatabase.openDatabase(source.absolutePath, null, SQLiteDatabase.OPEN_READWRITE)
+                .use { database ->
+                    // The app disables WAL. An IMMEDIATE transaction blocks writers while
+                    // the main database file is copied into a consistent snapshot.
+                    database.beginTransactionNonExclusive()
+                    try {
+                        database.rawQuery("PRAGMA journal_mode", null).use { cursor ->
+                            if (cursor.moveToFirst() && cursor.getString(0).equals("wal", true)) {
+                                throw IOException("Cannot copy a database in WAL mode")
+                            }
+                        }
+                        copyAndSync(source, snapshot)
+                    } finally {
+                        database.endTransaction()
+                    }
+                }
+            SQLiteDatabase.openDatabase(snapshot.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+                .use { database ->
+                    database.rawQuery("PRAGMA quick_check", null).use { cursor ->
+                        if (!cursor.moveToFirst() || cursor.getString(0) != "ok") {
+                            throw IOException("Database snapshot failed integrity check")
+                        }
+                    }
+                }
+            return snapshot
+        } catch (e: Exception) {
+            snapshot.delete()
+            throw IOException("Could not create database snapshot", e)
+        }
+    }
+
+    private fun copyAndSync(source: File, destination: File) {
+        FileInputStream(source).use { input ->
+            FileOutputStream(destination).use { output ->
+                copyWithCancellation(input, output)
+                output.fd.sync()
             }
         }
-        return file.uri.toString()
+    }
+
+    private fun copyWithCancellation(input: InputStream, output: OutputStream) {
+        val buffer = ByteArray(64 * 1024)
+        while (true) {
+            if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Backup interrupted")
+            val count = input.read(buffer)
+            if (count < 0) break
+            output.write(buffer, 0, count)
+        }
     }
 
     fun openDatabase(): SQLiteDatabase {

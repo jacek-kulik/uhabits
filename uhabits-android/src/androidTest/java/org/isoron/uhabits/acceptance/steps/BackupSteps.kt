@@ -39,6 +39,7 @@ const val DOWNLOAD_FOLDER = "/sdcard/Download/"
 fun exportFullBackup() {
     clickMenu(SETTINGS)
     clickText("Export full backup")
+    clickText("Share")
     if (SDK_INT < 28) return
     pressBack()
 }

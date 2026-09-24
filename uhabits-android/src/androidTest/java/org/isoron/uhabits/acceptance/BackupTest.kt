@@ -27,6 +27,7 @@ import org.isoron.uhabits.acceptance.steps.CommonSteps.longClickText
 import org.isoron.uhabits.acceptance.steps.CommonSteps.verifyDisplaysText
 import org.isoron.uhabits.acceptance.steps.CommonSteps.verifyDoesNotDisplayText
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.DELETE
+import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.SETTINGS
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.clickMenu
 import org.isoron.uhabits.acceptance.steps.clearBackupFolder
 import org.isoron.uhabits.acceptance.steps.clearDownloadFolder
@@ -40,6 +41,15 @@ import org.junit.Test
 
 @LargeTest
 class BackupTest : BaseUserInterfaceTest() {
+    @Test
+    fun shouldOfferSavingBackupToDevice() {
+        launchApp()
+        clickMenu(SETTINGS)
+        clickText("Export full backup")
+        verifyDisplaysText("Save to device")
+        verifyDisplaysText("Share")
+    }
+
     @Test
     fun shouldExportAndImportBackup() {
         launchApp()
