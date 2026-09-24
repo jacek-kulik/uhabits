@@ -121,6 +121,20 @@ class HabitMatcherTest : BaseUnitTest() {
     }
 
     @Test
+    fun testHideEnteredHidesSkippedAtLeastNumericalHabit() {
+        val habit = modelFactory.buildHabit()
+        habit.type = HabitType.NUMERICAL
+        habit.targetType = NumericalHabitType.AT_LEAST
+        habit.targetValue = 4.0
+        habit.originalEntries.add(Entry(getToday(), Entry.SKIP))
+        habit.recompute()
+
+        assertTrue(habit.isEnteredToday())
+        assertFalse(habit.isCompletedToday())
+        assertFalse(HabitMatcher(isEnteredAllowed = false).matches(habit))
+    }
+
+    @Test
     fun testHideEnteredStillHidesOtherEnteredHabits() {
         val matcher = HabitMatcher(isEnteredAllowed = false)
         val today = getToday()
