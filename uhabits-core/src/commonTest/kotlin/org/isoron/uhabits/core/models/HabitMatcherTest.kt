@@ -18,9 +18,12 @@
  */
 package org.isoron.uhabits.core.models
 
+import org.isoron.platform.time.getToday
 import org.isoron.uhabits.core.BaseUnitTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class HabitMatcherTest : BaseUnitTest() {
 
@@ -91,6 +94,49 @@ class HabitMatcherTest : BaseUnitTest() {
 
         // No match
         assertMatches(habits, "swimming", emptyList())
+    }
+
+    @Test
+    fun testHideEnteredKeepsPartialAtLeastNumericalHabit() {
+        val habit = modelFactory.buildHabit()
+        habit.type = HabitType.NUMERICAL
+        habit.targetType = NumericalHabitType.AT_LEAST
+        habit.targetValue = 4.0
+        val matcher = HabitMatcher(isEnteredAllowed = false)
+        val today = getToday()
+
+        assertTrue(matcher.matches(habit))
+
+        habit.originalEntries.add(Entry(today, 1000))
+        habit.recompute()
+        assertTrue(habit.isEnteredToday())
+        assertFalse(habit.isCompletedToday())
+        assertTrue(matcher.matches(habit))
+        assertEquals(1000, habit.originalEntries.get(today).value)
+
+        habit.originalEntries.add(Entry(today, 4000))
+        habit.recompute()
+        assertTrue(habit.isCompletedToday())
+        assertFalse(matcher.matches(habit))
+    }
+
+    @Test
+    fun testHideEnteredStillHidesOtherEnteredHabits() {
+        val matcher = HabitMatcher(isEnteredAllowed = false)
+        val today = getToday()
+
+        val yesNoHabit = modelFactory.buildHabit()
+        yesNoHabit.originalEntries.add(Entry(today, Entry.NO))
+        yesNoHabit.recompute()
+        assertFalse(matcher.matches(yesNoHabit))
+
+        val atMostHabit = modelFactory.buildHabit()
+        atMostHabit.type = HabitType.NUMERICAL
+        atMostHabit.targetType = NumericalHabitType.AT_MOST
+        atMostHabit.targetValue = 4.0
+        atMostHabit.originalEntries.add(Entry(today, 1000))
+        atMostHabit.recompute()
+        assertFalse(matcher.matches(atMostHabit))
     }
 
     private fun assertMatches(habits: List<Habit>, query: String, expected: List<Habit>) {

@@ -29,7 +29,12 @@ data class HabitMatcher(
         if (!isArchivedAllowed && habit.isArchived) return false
         if (isReminderRequired && !habit.hasReminder()) return false
         if (!isCompletedAllowed && habit.isCompletedToday()) return false
-        if (!isEnteredAllowed && habit.isEnteredToday()) return false
+        if (!isEnteredAllowed && habit.isEnteredToday()) {
+            // A partial count is entered, but an AT_LEAST habit is not yet complete.
+            if (!habit.isNumerical || habit.targetType != NumericalHabitType.AT_LEAST || habit.isCompletedToday()) {
+                return false
+            }
+        }
         if (searchQuery.isNotEmpty()) {
             val q = searchQuery.trim()
             if (q.isNotEmpty() &&
