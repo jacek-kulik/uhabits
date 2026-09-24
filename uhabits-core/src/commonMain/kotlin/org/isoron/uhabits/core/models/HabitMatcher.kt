@@ -18,6 +18,8 @@
  */
 package org.isoron.uhabits.core.models
 
+import org.isoron.platform.time.getToday
+
 data class HabitMatcher(
     val isArchivedAllowed: Boolean = false,
     val isReminderRequired: Boolean = false,
@@ -29,7 +31,16 @@ data class HabitMatcher(
         if (!isArchivedAllowed && habit.isArchived) return false
         if (isReminderRequired && !habit.hasReminder()) return false
         if (!isCompletedAllowed && habit.isCompletedToday()) return false
-        if (!isEnteredAllowed && habit.isEnteredToday()) return false
+        if (!isEnteredAllowed && habit.isEnteredToday()) {
+            // A partial count is entered, but an AT_LEAST habit is not yet complete.
+            if (!habit.isNumerical ||
+                habit.targetType != NumericalHabitType.AT_LEAST ||
+                habit.computedEntries.get(getToday()).value == Entry.SKIP ||
+                habit.isCompletedToday()
+            ) {
+                return false
+            }
+        }
         if (searchQuery.isNotEmpty()) {
             val q = searchQuery.trim()
             if (q.isNotEmpty() &&
