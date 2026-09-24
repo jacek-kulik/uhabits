@@ -1,26 +1,19 @@
 #!/bin/sh
+# uhabits-managed-reference-transaction
 
-[ "$1" = prepared ] || exit 0
+# Keep a previously installed hook active, then run the repository guards.
+previous="$0.previous"
+input=$(mktemp "${TMPDIR:-/tmp}/uhabits-git-hook.XXXXXXXX") || exit 1
+trap 'rm -f "$input"' EXIT HUP INT TERM
+cat > "$input" || exit 1
 
-zero=0000000000000000000000000000000000000000
-while read -r old new ref; do
-    [ "$ref" = refs/heads/dev ] || continue
-
-    if [ "${GIT_REFLOG_ACTION:-}" != 'pull --ff-only origin dev' ]; then
-        printf '%s\n' 'Blocked update to dev: use git pull --ff-only origin dev.' >&2
-        exit 1
+if [ -x "$previous" ]; then
+    previous_oid=$(git hash-object --no-filters "$previous" 2>/dev/null || true)
+    # This exact hook is the repository's older standalone dev guard. The
+    # current protect-dev helper supersedes it.
+    if [ "$previous_oid" != 76ecbf79534289753b0f3e8c6826ee4e4485c489 ]; then
+        "$previous" "$@" < "$input" || exit $?
     fi
-    if [ "$old" = "$zero" ] || [ "$new" = "$zero" ] ||
-        ! git merge-base --is-ancestor "$old" "$new"; then
-        printf '%s\n' 'Blocked update to dev: the pull must fast-forward.' >&2
-        exit 1
-    fi
-    remote_dev=$(git rev-parse --verify 'refs/remotes/origin/dev^{commit}' 2>/dev/null) || {
-        printf '%s\n' 'Blocked update to dev: origin/dev is unavailable.' >&2
-        exit 1
-    }
-    if [ "$new" != "$remote_dev" ]; then
-        printf '%s\n' 'Blocked update to dev: the new tip must equal origin/dev.' >&2
-        exit 1
-    fi
-done
+fi
+"$(dirname "$0")/protect-dev" "$@" < "$input" || exit $?
+"$(dirname "$0")/prevent-unpushed-branch-delete" "$@" < "$input"

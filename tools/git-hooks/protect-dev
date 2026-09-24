@@ -1,0 +1,34 @@
+#!/bin/sh
+
+[ "$1" = prepared ] || exit 0
+
+zero=0000000000000000000000000000000000000000
+while read -r old new ref; do
+    [ "$ref" = refs/heads/dev ] || continue
+
+    # pack-refs moves the same value between loose and packed storage. Permit
+    # those transactions because the logical branch tip does not change.
+    current=$(git rev-parse --verify "$ref^{commit}" 2>/dev/null || true)
+    if { [ "$old" = "$zero" ] && [ "$new" = "$current" ]; } ||
+        { [ "$new" = "$zero" ] && [ "$old" = "$current" ]; }; then
+        continue
+    fi
+
+    if [ "${GIT_REFLOG_ACTION:-}" != 'pull --ff-only origin dev' ]; then
+        printf '%s\n' 'Blocked update to dev: use git pull --ff-only origin dev.' >&2
+        exit 1
+    fi
+    if [ "$old" = "$zero" ] || [ "$new" = "$zero" ] ||
+        ! git merge-base --is-ancestor "$old" "$new"; then
+        printf '%s\n' 'Blocked update to dev: the pull must fast-forward.' >&2
+        exit 1
+    fi
+    remote_dev=$(git rev-parse --verify 'refs/remotes/origin/dev^{commit}' 2>/dev/null) || {
+        printf '%s\n' 'Blocked update to dev: origin/dev is unavailable.' >&2
+        exit 1
+    }
+    if [ "$new" != "$remote_dev" ]; then
+        printf '%s\n' 'Blocked update to dev: the new tip must equal origin/dev.' >&2
+        exit 1
+    fi
+done

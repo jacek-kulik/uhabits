@@ -1,0 +1,39 @@
+#!/bin/sh
+
+[ "$1" = prepared ] || exit 0
+
+zero=0000000000000000000000000000000000000000
+while read -r old new ref; do
+    case "$ref" in
+        refs/heads/*) ;;
+        *) continue ;;
+    esac
+    [ "$new" = "$zero" ] || continue
+
+    # pack-refs removes a loose ref after writing the same value to packed-refs.
+    # That storage-only transaction supplies the real old value.
+    if [ "$old" != "$zero" ]; then
+        current=$(git rev-parse --verify "$ref^{commit}" 2>/dev/null || true)
+        [ "$old" = "$current" ] && continue
+    fi
+
+    # git branch -D supplies an all-zero old value even for an existing ref.
+    # The current tip is still available during the prepared transaction.
+    if [ "$old" = "$zero" ]; then
+        old=$(git rev-parse --verify "$ref^{commit}" 2>/dev/null) || continue
+    fi
+
+    # Require the branch's tip to be reachable from the same branch on origin.
+    # A live lookup also catches remote branches removed since the last fetch.
+    remote_tip=$(git ls-remote --exit-code origin "$ref" 2>/dev/null |
+        awk -v ref="$ref" '$2 == ref { print $1 }')
+    if [ -z "$remote_tip" ]; then
+        printf 'Blocked deletion of %s: its branch is missing from origin or origin is unavailable.\n' "${ref#refs/heads/}" >&2
+        exit 1
+    fi
+    if [ "$old" != "$remote_tip" ] &&
+        ! git merge-base --is-ancestor "$old" "$remote_tip" 2>/dev/null; then
+        printf 'Blocked deletion of %s: its tip is not on origin/%s.\n' "${ref#refs/heads/}" "${ref#refs/heads/}" >&2
+        exit 1
+    fi
+done
