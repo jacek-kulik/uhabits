@@ -50,7 +50,6 @@ _uhabits_set_dev_env() {
     fi
     export ANDROID_HOME="$sdk_dir"
     export ANDROID_SDK_ROOT="$sdk_dir"
-    export GRADLE_USER_HOME="$repo_dir/.local-dev/gradle-home"
     export PATH="$sdk_dir/cmdline-tools/latest/bin:$sdk_dir/platform-tools:$PATH"
 }
 
