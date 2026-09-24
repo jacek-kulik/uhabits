@@ -97,6 +97,26 @@ own `.local-dev/` takes precedence when present. If neither checkout has the
 tools, install them as described above and set `JAVA_HOME` and `ANDROID_HOME` or
 `ANDROID_SDK_ROOT`. The script leaves `GRADLE_USER_HOME` alone, so Gradle keeps
 using your configured or default dependency cache.
+## Install or update on a USB phone
+
+Connect your phone by USB, enable USB debugging, and accept its debugging prompt.
+From the repository checkout, run:
+
+```bash
+./tools/install-on-phone.sh
+```
+
+The script builds the debug APK and installs it as **Habits Dev**. Running it
+again updates that installation while keeping its data. The debug app is
+separate from the release app and has separate data. If more than one USB
+device is connected, pass the serial shown by `adb devices -l`:
+
+```bash
+./tools/install-on-phone.sh DEVICE_SERIAL
+```
+
+The script does not uninstall an app if Android rejects the update, for
+example because the existing debug install was signed with another key.
 
 ## Automatic backups in this fork
 
