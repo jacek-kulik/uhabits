@@ -129,6 +129,9 @@
     <string name="every_week">Every week</string>
     <string name="help">Help &amp; FAQ</string>
     <string name="could_not_export">Failed to export data.</string>
+    <string name="save_to_device">Save to device</string>
+    <string name="share_export">Share</string>
+    <string name="export_saved">Export saved.</string>
     <string name="could_not_import">Failed to import data.</string>
     <string name="file_not_recognized">File not recognized.</string>
     <string name="habits_imported">Habits imported successfully.</string>

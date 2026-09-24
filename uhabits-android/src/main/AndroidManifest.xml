@@ -81,6 +81,12 @@
         </activity>
 
         <activity
+            android:name=".utils.SaveExportActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode" />
+
+        <activity
             android:name=".activities.intro.IntroActivity"
             android:label=""
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
