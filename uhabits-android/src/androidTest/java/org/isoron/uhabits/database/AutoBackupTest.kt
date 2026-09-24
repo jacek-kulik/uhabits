@@ -20,6 +20,8 @@
 package org.isoron.uhabits.database
 
 import android.database.sqlite.SQLiteDatabase
+import android.net.Uri
+import androidx.preference.PreferenceManager
 import org.isoron.platform.time.DateUtils
 import org.isoron.uhabits.AndroidDirFinder
 import org.isoron.uhabits.BaseAndroidTest
@@ -87,6 +89,40 @@ class AutoBackupTest : BaseAndroidTest() {
             BackupPolicy.pattern(targetContext.packageName).matches(it.name)
         }
         assertEquals(1, backupCount)
+    }
+
+    @Test
+    fun testFreshPrivateBackupsStillPrune() {
+        val dir = AndroidDirFinder(targetContext).getFilesDir("Backups")!!
+        assertFreshBackupsArePruned(dir)
+    }
+
+    @Test
+    fun testFreshPublicBackupsStillPrune() {
+        val dir = File(targetContext.cacheDir, "test-public-backups")
+        assertTrue(dir.isDirectory || dir.mkdirs())
+        PreferenceManager.getDefaultSharedPreferences(targetContext).edit()
+            .putString("publicBackupFolder", Uri.fromFile(dir).toString())
+            .apply()
+        assertFreshBackupsArePruned(dir)
+    }
+
+    private fun assertFreshBackupsArePruned(dir: File) {
+        removeAllFiles(dir)
+        val prefix = BackupPolicy.prefix(targetContext.packageName, automatic = true)
+        val now = System.currentTimeMillis()
+        val files = (1..6).map { k ->
+            File(dir, "$prefix fresh-$k.db").apply {
+                FileOutputStream(this).close()
+                assertTrue(setLastModified(now - 60_000 + k * 1000))
+            }
+        }
+
+        AutoBackup(targetContext).run(keep = 5)
+
+        assertFalse(files.first().exists())
+        files.drop(1).forEach { assertTrue(it.exists()) }
+        assertEquals(files.drop(1).map { it.name }.toSet(), dir.listFiles()!!.map { it.name }.toSet())
     }
 
     private fun removeAllFiles(dir: File) {

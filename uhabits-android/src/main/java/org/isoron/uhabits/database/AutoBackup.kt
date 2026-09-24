@@ -60,9 +60,9 @@ class AutoBackup(private val context: Context) {
         val files = dir.listFiles()?.filter { it.isFile && backupPattern.matches(it.name) }
             ?: throw IOException("Cannot list private backup folder")
         val newestTimestamp = files.maxOfOrNull { it.lastModified() }
-        if (!BackupPolicy.isDue(newestTimestamp, System.currentTimeMillis())) return
-
-        DatabaseUtils.saveDatabaseCopy(context, dir, automatic = true)
+        if (BackupPolicy.isDue(newestTimestamp, System.currentTimeMillis())) {
+            DatabaseUtils.saveDatabaseCopy(context, dir, automatic = true)
+        }
         val current = dir.listFiles()?.filter { it.isFile && backupPattern.matches(it.name) }
             ?: throw IOException("Cannot list private backup folder")
         if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Backup interrupted")
@@ -75,9 +75,9 @@ class AutoBackup(private val context: Context) {
         val files = dir.listFiles()
             .filter { it.isFile && it.name?.matches(backupPattern) == true }
         val newestTimestamp = files.maxOfOrNull { it.lastModified() }
-        if (!BackupPolicy.isDue(newestTimestamp, System.currentTimeMillis())) return
-
-        DatabaseUtils.saveDatabaseCopy(context, dir, automatic = true)
+        if (BackupPolicy.isDue(newestTimestamp, System.currentTimeMillis())) {
+            DatabaseUtils.saveDatabaseCopy(context, dir, automatic = true)
+        }
         val current = dir.listFiles()
             .filter { it.isFile && it.name?.matches(backupPattern) == true }
         if (Thread.currentThread().isInterrupted) throw InterruptedIOException("Backup interrupted")
