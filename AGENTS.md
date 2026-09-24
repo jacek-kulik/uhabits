@@ -30,6 +30,16 @@ original project; follow the fork owner's request when it differs.
 - Use the checked-in Gradle wrapper, not a system Gradle installation.
 - Do not put signing keys, credentials, or generated build outputs in Git.
 
+## Updating dev
+
+- Codex must never merge into local `dev`, including a manual fast-forward merge.
+  Do not commit on `dev`, rebase it, cherry-pick onto it, reset it, update its ref
+  directly, or push it.
+- Install the local guard with `tools/install-dev-guard.sh`. The only permitted
+  update is from a clean `dev` worktree with `git pull --ff-only origin dev`.
+  If that pull cannot fast-forward, leave `dev` unchanged and report the
+  divergence instead of repairing it with another Git operation.
+
 ## Change and verification workflow
 
 - Trace a feature from the Android entry point into core logic and persistence
