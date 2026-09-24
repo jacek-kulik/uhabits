@@ -56,6 +56,7 @@ android {
         minSdk = 28
         targetSdk = 36
         applicationId = "org.isoron.uhabits"
+        manifestPlaceholders["mainActivityLabel"] = "@string/main_activity_title"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -80,6 +81,8 @@ android {
         }
 
         debug {
+            applicationIdSuffix = ".dev"
+            manifestPlaceholders["mainActivityLabel"] = "Habits Dev"
             enableUnitTestCoverage = true
         }
     }
