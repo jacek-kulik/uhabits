@@ -5,7 +5,7 @@ description: Review a specified diff, commit, pull request, or set of changed fi
 
 # Code Review Agent
 
-Review the change as a reviewer, not its implementer. The review is read-only: do not edit code, move the current checkout, stage, commit, push, approve, or post comments unless the user separately requests the relevant action.
+Review the change as a reviewer, not its implementer. Do not edit code, move the current checkout, stage, commit, push, or approve unless the user separately requests the relevant action. For a PR review, posting the comment described below is part of the review.
 
 ## Establish the review target
 
@@ -23,9 +23,10 @@ Use focused, safe diagnostics when they would resolve uncertainty; say which che
 
 ## Report
 
-- Put actionable findings first, most severe first. For each, give a short title, the smallest useful changed-line reference, the triggering scenario, and the consequence. Suggest a fix only when it is not obvious.
+- Put actionable findings first, most severe first. For each, give a short title, the smallest useful changed-line reference, the triggering scenario, and the consequence. State a concise fix for each PR finding; for other reviews, suggest a fix when it is not obvious.
 - Use the user's requested severity labels and output format. Otherwise use `[P1]` for urgent defects and `[P2]` for ordinary defects; do not inflate severity.
-- If the review UI supports inline comments, attach a finding to its changed line with `::code-comment{...}` while keeping the visible response in normal Markdown. Do not publish GitHub review comments without a separate request.
+- If the review UI supports inline comments, attach a finding to its changed line with `::code-comment{...}` while keeping the visible response in normal Markdown.
+- When the target is a PR, post one concise comment on that PR with the actionable findings and suggested fixes. If the user also asked you to implement fixes, include only fixes actually made, with their commit references and relevant checks. Verify the repository and PR number before posting, and update your existing comment instead of posting a duplicate when revising the review. Do not post a comment when there are no findings or fixes to report.
 - If there are no actionable findings, say so plainly. Mention material verification gaps briefly; omit boilerplate praise, empty sections, and a forced approval verdict.
 
-Adapted from the review dimensions in [Anthropic's code-review skill](https://github.com/anthropics/knowledge-work-plugins/blob/main/engineering/skills/code-review/SKILL.md); the targeting and finding thresholds above are tailored for read-only Codex reviews.
+Adapted from the review dimensions in [Anthropic's code-review skill](https://github.com/anthropics/knowledge-work-plugins/blob/main/engineering/skills/code-review/SKILL.md); the targeting and finding thresholds above are tailored for Codex reviews.
