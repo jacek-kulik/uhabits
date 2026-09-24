@@ -23,8 +23,10 @@ original project; follow the fork owner's request when it differs.
   `ANDROID_HOME` or `ANDROID_SDK_ROOT`, then run
   `sdkmanager "platforms;android-36"`.
   Before Gradle commands, run `source tools/dev-env.sh`. It prefers this
-  checkout's ignored `.local-dev/` toolchain, but also accepts an installed
-  JDK 17 and SDK 36. `local.properties` is machine-specific and optional.
+  checkout's ignored `.local-dev/` toolchain, then the main checkout's toolchain
+  from a linked Git worktree. It also accepts an installed JDK 17 and SDK 36.
+  The script leaves `GRADLE_USER_HOME` unchanged. `local.properties` is
+  machine-specific and optional.
 - Use the checked-in Gradle wrapper, not a system Gradle installation.
 - Do not put signing keys, credentials, or generated build outputs in Git.
 
