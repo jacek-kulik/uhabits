@@ -6,12 +6,23 @@ zero=0000000000000000000000000000000000000000
 while read -r old new ref; do
     [ "$ref" = refs/heads/dev ] || continue
 
-    # pack-refs moves the same value between loose and packed storage. Permit
-    # those transactions because the logical branch tip does not change.
-    current=$(git rev-parse --verify "$ref^{commit}" 2>/dev/null || true)
-    if { [ "$old" = "$zero" ] && [ "$new" = "$current" ]; } ||
-        { [ "$new" = "$zero" ] && [ "$old" = "$current" ]; }; then
-        continue
+    # pack-refs first writes the loose value to packed-refs, then removes the
+    # loose copy. Permit both storage-only steps without mistaking an
+    # expected-old deletion for one of them.
+    loose_ref=$(git rev-parse --git-path "$ref")
+    if [ "$old" = "$zero" ] && [ -f "$loose_ref" ]; then
+        current=$(git rev-parse --verify "$ref^{commit}" 2>/dev/null || true)
+        [ "$new" = "$current" ] && continue
+    fi
+    if [ "$new" = "$zero" ] && [ "$old" != "$zero" ]; then
+        packed_refs=$(git rev-parse --git-path packed-refs)
+        packed_tip=$(
+            [ -f "$packed_refs" ] &&
+                awk -v ref="$ref" '$2 == ref { print $1; exit }' "$packed_refs"
+        )
+        if [ -f "$loose_ref" ] && [ "$old" = "$packed_tip" ]; then
+            continue
+        fi
     fi
 
     if [ "${GIT_REFLOG_ACTION:-}" != 'pull --ff-only origin dev' ]; then

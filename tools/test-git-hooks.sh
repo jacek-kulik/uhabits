@@ -75,12 +75,19 @@ must_block git -C "$test_dir/repo" update-ref -d refs/heads/direct-update-ref
 git -C "$test_dir/repo" remote set-url origin "$test_dir/missing-origin.git"
 must_block git -C "$test_dir/repo" branch -D direct-update-ref
 git -C "$test_dir/repo" remote set-url origin "$test_dir/origin.git"
+direct_update_ref_oid=$(git -C "$test_dir/repo" rev-parse refs/heads/direct-update-ref)
+must_block git -C "$test_dir/repo" update-ref -d \
+    refs/heads/direct-update-ref "$direct_update_ref_oid"
+git -C "$test_dir/repo" show-ref --verify --quiet refs/heads/direct-update-ref
 git -C "$test_dir/repo" tag temporary-tag
 git -C "$test_dir/repo" tag -d temporary-tag >/dev/null
 
 must_block git -C "$test_dir/repo" update-ref -d refs/heads/legacy-protected
 git -C "$test_dir/repo" commit -q --allow-empty -m next
 must_block git -C "$test_dir/repo" update-ref refs/heads/dev HEAD
+dev_oid=$(git -C "$test_dir/repo" rev-parse refs/heads/dev)
+must_block git -C "$test_dir/repo" update-ref -d refs/heads/dev "$dev_oid"
+git -C "$test_dir/repo" show-ref --verify --quiet refs/heads/dev
 test -s "$HOOK_MARKER"
 
 git init -q -b main "$test_dir/legacy-repo"
@@ -88,6 +95,7 @@ git -C "$test_dir/legacy-repo" config user.name 'Hook Test'
 git -C "$test_dir/legacy-repo" config user.email 'hook-test@example.invalid'
 git -C "$test_dir/legacy-repo" commit -q --allow-empty -m initial
 git -C "$test_dir/legacy-repo" branch dev
+git -C "$test_dir/legacy-repo" branch packed-unpushed
 mkdir -p "$test_dir/legacy-repo/tools/git-hooks"
 cp "$repo_dir/tools/install-git-hooks.sh" "$test_dir/legacy-repo/tools/"
 cp "$repo_dir/tools/git-hooks/"* "$test_dir/legacy-repo/tools/git-hooks/"
@@ -100,5 +108,12 @@ test ! -e "$test_dir/legacy-repo/.git/hooks/reference-transaction.previous"
 cmp -s "$repo_dir/tools/git-hooks/reference-transaction" \
     "$test_dir/legacy-repo/.git/hooks/reference-transaction"
 git -C "$test_dir/legacy-repo" pack-refs --all
+packed_unpushed_oid=$(
+    git -C "$test_dir/legacy-repo" rev-parse refs/heads/packed-unpushed
+)
+must_block git -C "$test_dir/legacy-repo" update-ref -d \
+    refs/heads/packed-unpushed "$packed_unpushed_oid"
+git -C "$test_dir/legacy-repo" show-ref --verify --quiet \
+    refs/heads/packed-unpushed
 
 printf '%s\n' 'Git hook integration tests passed.'

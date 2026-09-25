@@ -11,10 +11,18 @@ while read -r old new ref; do
     [ "$new" = "$zero" ] || continue
 
     # pack-refs removes a loose ref after writing the same value to packed-refs.
-    # That storage-only transaction supplies the real old value.
+    # Require both physical copies before treating the deletion as storage-only;
+    # an expected-old update-ref deletion also supplies the real old value.
     if [ "$old" != "$zero" ]; then
-        current=$(git rev-parse --verify "$ref^{commit}" 2>/dev/null || true)
-        [ "$old" = "$current" ] && continue
+        loose_ref=$(git rev-parse --git-path "$ref")
+        packed_refs=$(git rev-parse --git-path packed-refs)
+        packed_tip=$(
+            [ -f "$packed_refs" ] &&
+                awk -v ref="$ref" '$2 == ref { print $1; exit }' "$packed_refs"
+        )
+        if [ -f "$loose_ref" ] && [ "$old" = "$packed_tip" ]; then
+            continue
+        fi
     fi
 
     # git branch -D supplies an all-zero old value even for an existing ref.
