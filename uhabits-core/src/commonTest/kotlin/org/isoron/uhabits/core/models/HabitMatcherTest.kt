@@ -153,6 +153,31 @@ class HabitMatcherTest : BaseUnitTest() {
         assertFalse(matcher.matches(atMostHabit))
     }
 
+    @Test
+    fun testAutomaticCompletionDoesNotHideHabit() {
+        val habit = buildHabit("Gym")
+        val today = getToday()
+        habit.frequency = Frequency(5, 7)
+        repeat(5) { offset ->
+            habit.originalEntries.add(Entry(today.minus(offset + 1), Entry.YES_MANUAL))
+        }
+        habit.recompute()
+
+        assertTrue(habit.isCompletedToday())
+        assertTrue(HabitMatcher(isCompletedAllowed = false).matches(habit))
+        assertTrue(HabitMatcher(isEnteredAllowed = false).matches(habit))
+
+        habit.originalEntries.add(Entry(today, Entry.YES_MANUAL))
+        habit.recompute()
+
+        assertFalse(HabitMatcher(isCompletedAllowed = false).matches(habit))
+
+        habit.originalEntries.add(Entry(today, Entry.NO))
+        habit.recompute()
+
+        assertFalse(HabitMatcher(isEnteredAllowed = false).matches(habit))
+    }
+
     private fun assertMatches(habits: List<Habit>, query: String, expected: List<Habit>) {
         val matcher = HabitMatcher(searchQuery = query)
         val actual = habits.filter(matcher::matches)

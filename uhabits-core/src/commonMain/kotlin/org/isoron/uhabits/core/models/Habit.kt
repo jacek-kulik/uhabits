@@ -60,6 +60,16 @@ data class Habit(
     fun isCompletedToday(): Boolean {
         val today = getToday()
         val value = computedEntries.get(today).value
+        return isCompleted(value)
+    }
+
+    fun isExplicitlyCompletedToday(): Boolean {
+        val today = getToday()
+        val value = originalEntries.get(today).value
+        return isCompleted(value)
+    }
+
+    private fun isCompleted(value: Int): Boolean {
         return if (isNumerical) {
             when (targetType) {
                 NumericalHabitType.AT_LEAST -> value / 1000.0 >= targetValue
@@ -73,6 +83,12 @@ data class Habit(
     fun isEnteredToday(): Boolean {
         val today = getToday()
         val value = computedEntries.get(today).value
+        return value != Entry.UNKNOWN
+    }
+
+    fun isExplicitlyEnteredToday(): Boolean {
+        val today = getToday()
+        val value = originalEntries.get(today).value
         return value != Entry.UNKNOWN
     }
 
