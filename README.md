@@ -22,8 +22,8 @@ history, including changes inherited from upstream.
 
 ## Build and install
 
-Install JDK 17 and Android SDK platform 36, then use the checked-in Gradle
-wrapper. From this repository's root:
+Install JDK 17, Android SDK platform 36, and SDK Platform-Tools (for `adb`),
+then use the checked-in Gradle wrapper. From this repository's root:
 
 ```sh
 source tools/dev-env.sh
