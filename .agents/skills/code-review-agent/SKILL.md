@@ -1,11 +1,11 @@
 ---
 name: code-review-agent
-description: Review a specified diff, commit, pull request, or set of changed files for actionable defects. Use when asked to review code, not when asked only to implement a change or explain existing code.
+description: Review a specified diff, commit, pull request, or set of changed files, and automatically fix clear defects on writable review branches. Use when asked to review code, not when asked only to implement a change or explain existing code.
 ---
 
 # Code Review Agent
 
-Review the change as a reviewer, not its implementer. The review is read-only: do not edit code, move the current checkout, stage, commit, push, approve, or post comments unless the user separately requests the relevant action.
+Review the change critically, then resolve clear defects when the review target is writable. A review request authorizes posting findings to the specified pull request and implementing, committing, and pushing obvious low-risk fixes to its writable head branch; it does not authorize approving, merging, closing, or opening a pull request. Preserve the user's current checkout and use the repository's worktree workflow for edits.
 
 ## Establish the review target
 
@@ -21,11 +21,19 @@ Report a finding only if it is discrete, introduced by the change, supported by 
 
 Use focused, safe diagnostics when they would resolve uncertainty; say which checks ran. If verification is unavailable, distinguish an unverified concern from a confirmed defect.
 
+## Resolve findings
+
+- Fix a finding automatically when the defect is supported by evidence, the intended behavior is clear, and one small low-risk correction follows from it. Add or update focused tests when behavior changes, then run the relevant checks.
+- Ask for the user's judgment only when the finding or fix is genuinely uncertain, complicated, risky, offers materially different options, or requires a product or design choice. Explain the evidence and tradeoffs, then continue any independent fixes that are clear.
+- Do not change code for speculative concerns. Investigate them far enough to confirm a defect or present the remaining uncertainty to the user.
+- For an uncommitted working-tree review that cannot be fixed safely in an isolated worktree, report the concrete fix instead of rewriting the user's existing changes.
+
 ## Report
 
-- Put actionable findings first, most severe first. For each, give a short title, the smallest useful changed-line reference, the triggering scenario, and the consequence. Suggest a fix only when it is not obvious.
+- Put unresolved actionable findings first, most severe first. For each, give a short title, the smallest useful changed-line reference, the triggering scenario, the consequence, and a concise suggested fix. Summarize automatically fixed findings with their commit and verification results.
 - Use the user's requested severity labels and output format. Otherwise use `[P1]` for urgent defects and `[P2]` for ordinary defects; do not inflate severity.
-- If the review UI supports inline comments, attach a finding to its changed line with `::code-comment{...}` while keeping the visible response in normal Markdown. Do not publish GitHub review comments without a separate request.
+- If the review UI supports inline comments, attach unresolved findings to changed lines with `::code-comment{...}` while keeping the visible response in normal Markdown.
+- For a pull request, post one concise comment containing unresolved findings and any fixes made, with their commits and checks. No separate authorization is required. Update an existing review comment instead of posting a duplicate, and do not post when there are no findings or fixes.
 - If there are no actionable findings, say so plainly. Mention material verification gaps briefly; omit boilerplate praise, empty sections, and a forced approval verdict.
 
-Adapted from the review dimensions in [Anthropic's code-review skill](https://github.com/anthropics/knowledge-work-plugins/blob/main/engineering/skills/code-review/SKILL.md); the targeting and finding thresholds above are tailored for read-only Codex reviews.
+Adapted from the review dimensions in [Anthropic's code-review skill](https://github.com/anthropics/knowledge-work-plugins/blob/main/engineering/skills/code-review/SKILL.md); the targeting and finding thresholds above are tailored for this repository's review-and-fix workflow.
