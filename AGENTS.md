@@ -35,8 +35,10 @@ original project; follow the fork owner's request when it differs.
 - Codex must never merge into local `dev`, including a manual fast-forward merge.
   Do not commit on `dev`, rebase it, cherry-pick onto it, reset it, update its ref
   directly, or push it.
-- Install the local guard with `tools/install-dev-guard.sh`. The only permitted
-  update is from a clean `dev` worktree with `git pull --ff-only origin dev`.
+- Install the local guards with `tools/install-git-hooks.sh`. They protect `dev`
+  and local branches with work missing from `origin`; see `docs/GIT_HOOKS.md`.
+  The only permitted `dev` update is from a clean worktree with
+  `git pull --ff-only origin dev`.
   If that pull cannot fast-forward, leave `dev` unchanged and report the
   divergence instead of repairing it with another Git operation.
 
