@@ -26,8 +26,16 @@ if [[ "${#devices[@]}" -ne 1 || ! "${devices[0]}" =~ ^emulator-[0-9]+[[:space:]]
     exit 1
 fi
 serial="${devices[0]%% *}"
+[[ "$serial" == emulator-6360 ]] || {
+    printf '%s\n' 'Local test gate: API 36 test emulator must use serial emulator-6360.' >&2
+    exit 1
+}
 [[ "$("$adb" -s "$serial" shell getprop sys.boot_completed | tr -d '\r')" == 1 ]] || {
     printf '%s\n' 'Local test gate: emulator has not completed booting.' >&2
+    exit 1
+}
+[[ "$("$adb" -s "$serial" shell getprop ro.build.version.sdk | tr -d '\r')" == 36 ]] || {
+    printf '%s\n' 'Local test gate: emulator must run Android API 36.' >&2
     exit 1
 }
 "$adb" -s "$serial" shell wm size | tr -d '\r' | grep -Eq 'size: 768x1280$' || {
@@ -52,12 +60,11 @@ for package in org.isoron.uhabits.dev org.isoron.uhabits.dev.test; do
         "$adb" -s "$serial" uninstall "$package"
     fi
 done
-for setting in window_animation_scale transition_animation_scale animator_duration_scale; do
+for setting in auto_time auto_time_zone window_animation_scale transition_animation_scale animator_duration_scale; do
     "$adb" -s "$serial" shell settings put global "$setting" 0
 done
 
-./gradlew :uhabits-android:connectedDebugAndroidTest \
-    --rerun-tasks --console=plain 2>&1 | tee "$log_dir/device-tests.log"
+./build.sh android-tests 36 2>&1 | tee "$log_dir/device-tests.log"
 "$repo_dir/tools/check-local-gate-state.sh"
 [[ "$(git rev-parse HEAD)" == "$head" ]] || {
     printf '%s\n' 'Local test gate: HEAD changed during testing.' >&2

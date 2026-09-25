@@ -35,9 +35,11 @@ run the relevant JVM tests, `ktlintCheck`, and `assembleDebug`.
 Before proposing a committed branch for `dev`, run `tools/local-test-gate.sh`.
 It requires a clean task branch containing the current remote `dev` tip. It
 reruns the gate's regression tests plus the core and Android JVM tests, checks
-style and lint, builds the app and test APKs, then runs
-`connectedDebugAndroidTest` on exactly one ready emulator. It checks Git state
-again afterward. Logs are under `build/local-test-gate/<commit>`.
+style and lint, builds the app and test APKs, then runs every classified medium
+and large test on exactly one ready API 36 emulator. All concrete
+`androidTest` classes must have a size annotation so none fall outside this
+sequence. The gate checks Git state again afterward. Logs are under
+`build/local-test-gate/<commit>`.
 If `dev` advances, update the task branch and rerun the gate; never merge into
 local `dev` as a workaround.
 
@@ -45,6 +47,7 @@ The full gate needs a dedicated emulator. Install the SDK emulator and an
 Android system image if they are missing, then create an AVD with the Nexus 4
 screen configuration used by the image tests: 768x1280 at density 320. Set the
 locale to English (US), keep the home screen clean, and disable animations.
+Use an emulator with a normal display backend for screenshot comparisons.
 Check `adb devices` before running the gate; a physical phone is not an
 acceptable substitute. The gate verifies the screen, density, locale, and boot
 state, then removes only the Dev app and its test package before running tests.

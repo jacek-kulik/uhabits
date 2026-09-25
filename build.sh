@@ -204,42 +204,43 @@ android_launch() {
 
     if pgrep -f "${AVDNAME}" > /dev/null; then
         log_info "Emulator already running (API $API), reusing..."
-        return 0
-    fi
+    else
+        log_info "Launching emulator (API $API)..."
+        local EMULATOR_LOG="build/emulator-${API}.log"
+        $EMULATOR \
+            -avd $AVDNAME \
+            -port $PORT \
+            -no-snapshot \
+            1>"$EMULATOR_LOG" 2>&1 &
 
-    log_info "Launching emulator (API $API)..."
-    local EMULATOR_LOG="build/emulator-${API}.log"
-    $EMULATOR \
-        -avd $AVDNAME \
-        -port $PORT \
-        -no-snapshot \
-        1>"$EMULATOR_LOG" 2>&1 &
+        log_info "Waiting for emulator to boot..."
+        timeout $BOOT_TIMEOUT $ADB wait-for-device shell \
+            'while [[ -z "$(getprop sys.boot_completed)" ]]; do sleep 1; done; input keyevent 82' &
+        local WAIT_PID=$!
 
-    log_info "Waiting for emulator to boot..."
-    timeout $BOOT_TIMEOUT $ADB wait-for-device shell \
-        'while [[ -z "$(getprop sys.boot_completed)" ]]; do sleep 1; done; input keyevent 82' &
-    local WAIT_PID=$!
+        while kill -0 $WAIT_PID 2>/dev/null; do
+            if grep -q "FATAL" "$EMULATOR_LOG" 2>/dev/null; then
+                log_error "Emulator crashed:"
+                grep "FATAL" "$EMULATOR_LOG"
+                kill $WAIT_PID 2>/dev/null
+                wait $WAIT_PID 2>/dev/null
+                return 1
+            fi
+            sleep 2
+        done
 
-    while kill -0 $WAIT_PID 2>/dev/null; do
-        if grep -q "FATAL" "$EMULATOR_LOG" 2>/dev/null; then
-            log_error "Emulator crashed:"
-            grep "FATAL" "$EMULATOR_LOG"
-            kill $WAIT_PID 2>/dev/null
-            wait $WAIT_PID 2>/dev/null
+        wait $WAIT_PID
+        if [ $? -ne 0 ]; then
+            log_error "Emulator failed to boot after $BOOT_TIMEOUT seconds."
             return 1
         fi
-        sleep 2
-    done
-
-    wait $WAIT_PID
-    if [ $? -ne 0 ]; then
-        log_error "Emulator failed to boot after $BOOT_TIMEOUT seconds."
-        return 1
     fi
 
-    log_info "Disabling animations..."
+    log_info "Preparing emulator..."
     run $ADB root || return 1
     sleep 5
+    run $ADB shell settings put global auto_time 0 || return 1
+    run $ADB shell settings put global auto_time_zone 0 || return 1
     run $ADB shell settings put global window_animation_scale 0 || return 1
     run $ADB shell settings put global transition_animation_scale 0 || return 1
     run $ADB shell settings put global animator_duration_scale 0 || return 1

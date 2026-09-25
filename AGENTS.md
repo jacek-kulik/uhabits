@@ -76,6 +76,9 @@ original project; follow the fork owner's request when it differs.
 - A build-only result or missing emulator is an incomplete gate. Report the
   failing check and tested commit, and leave `dev` untouched. Follow
   `docs/TEST.md` for emulator setup and device-test limitations.
+- Give every concrete `androidTest` class a `MediumTest` or `LargeTest` size
+  annotation. The gate runs those groups in isolation to prevent shared device
+  state from leaking between incompatible test categories.
 - Fix new lint findings. Do not regenerate `uhabits-android/lint-baseline.xml`
   or accept screenshot goldens just to make a failing gate pass; review the
   specific change to either baseline first.

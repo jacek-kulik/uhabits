@@ -20,9 +20,11 @@
 package org.isoron.platform.gui
 
 import android.graphics.Bitmap
+import androidx.test.filters.MediumTest
 import org.isoron.uhabits.BaseViewTest
 import org.junit.Test
 
+@MediumTest
 class AndroidCanvasTest : BaseViewTest() {
     @Test
     fun testDrawTestImage() {
