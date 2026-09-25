@@ -63,6 +63,23 @@ original project; follow the fork owner's request when it differs.
   diff and Git status before committing or pushing. Never push without a
   request for that change.
 
+## Local gate before dev
+
+- For behavior changes, add a focused test that would fail for the reported bug
+  or missing behavior when practical. Review test assertions against the user
+  requirement; an AI-authored test can reproduce an AI-authored mistake.
+- Once a task branch is committed, run `tools/local-test-gate.sh` before calling
+  it ready for `dev`. The script verifies the remote `dev` tip, requires a clean
+  branch containing that tip, reruns JVM tests, checks formatting and lint,
+  builds both debug APKs, and runs the full Android suite on one dedicated
+  emulator.
+- A build-only result or missing emulator is an incomplete gate. Report the
+  failing check and tested commit, and leave `dev` untouched. Follow
+  `docs/TEST.md` for emulator setup and device-test limitations.
+- Fix new lint findings. Do not regenerate `uhabits-android/lint-baseline.xml`
+  or accept screenshot goldens just to make a failing gate pass; review the
+  specific change to either baseline first.
+
 The outline of this guide was informed by the Android team's
 [`nowinandroid/AGENTS.md`](https://github.com/android/nowinandroid/blob/main/AGENTS.md);
 all project details and commands above come from this repository.

@@ -93,8 +93,7 @@ object EditHabitSteps {
 
     private fun typeTextWithId(id: Int, name: String) {
         Espresso.onView(ViewMatchers.withId(id)).perform(
-            ViewActions.clearText(),
-            ViewActions.typeText(name),
+            ViewActions.replaceText(name),
             ViewActions.closeSoftKeyboard()
         )
     }

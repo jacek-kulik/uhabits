@@ -102,15 +102,14 @@ open class BaseUserInterfaceTest {
     }
 
     companion object {
-        private const val PKG = "org.isoron.uhabits"
         const val EMPTY_DESCRIPTION_HABIT_NAME = "Read books"
         lateinit var device: UiDevice
         fun startActivity(cls: Class<*>) {
+            val context = ApplicationProvider.getApplicationContext<Context>()
             val intent = Intent()
-            intent.component = ComponentName(PKG, cls.canonicalName!!)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            ApplicationProvider.getApplicationContext<Context>().startActivity(intent)
+            intent.component = ComponentName(context.packageName, cls.canonicalName!!)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
         }
     }
 }

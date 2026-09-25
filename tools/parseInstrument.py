@@ -32,22 +32,22 @@ exit_code = 1
 initial_time = 0.0
 
 for line in open(log_filename).readlines():
-    matches = re.findall('^([0-9.]*)', line)
-    current_time = float(matches[0])
+    timestamp = re.match(r'^([0-9.]+)', line)
+    current_time = float(timestamp.group(1)) if timestamp else initial_time
 
-    matches = re.findall('INSTRUMENTATION_STATUS: class=(.*)', line)
+    matches = re.findall(r'INSTRUMENTATION_STATUS: class=(.*)', line)
     if len(matches) > 0:
         current_class = matches[0]
 
-    matches = re.findall('INSTRUMENTATION_STATUS: test=(.*)', line)
+    matches = re.findall(r'INSTRUMENTATION_STATUS: test=(.*)', line)
     if len(matches) > 0:
         current_method = matches[0]
 
-    matches = re.findall('OK \([0-9]* tests?\)', line)
+    matches = re.findall(r'OK \([0-9]* tests?\)', line)
     if len(matches) > 0:
         exit_code = 0
 
-    matches = re.findall('INSTRUMENTATION_STATUS_CODE: ([-0-9]*)', line)
+    matches = re.findall(r'INSTRUMENTATION_STATUS_CODE: ([-0-9]*)', line)
     if len(matches) > 0:
         status_code = int(matches[0])
         if (status_code < 0) and (status_code != STATUS_DISABLED):

@@ -18,6 +18,10 @@
  */
 package org.isoron.uhabits.acceptance
 
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.typeText
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import org.isoron.uhabits.BaseUserInterfaceTest
@@ -44,6 +48,7 @@ import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.ADD
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.ARCHIVE
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.DELETE
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.EDIT
+import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.SEARCH
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.TOGGLE_ARCHIVED
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.TOGGLE_COMPLETED
 import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.MenuItem.UNARCHIVE
@@ -55,6 +60,17 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @LargeTest
 class HabitsTest : BaseUserInterfaceTest() {
+
+    @Test
+    fun shouldFilterHabitsFromSearchMenu() {
+        launchApp()
+        clickMenu(SEARCH)
+        onView(withId(androidx.appcompat.R.id.search_src_text)).perform(typeText("Wake"))
+        verifyDisplaysText("Wake up early")
+        verifyDoesNotDisplayText("Track time")
+        onView(withId(androidx.appcompat.R.id.search_src_text)).perform(replaceText(""))
+        verifyDisplaysText("Track time")
+    }
 
     @Test
     @Throws(Exception::class)

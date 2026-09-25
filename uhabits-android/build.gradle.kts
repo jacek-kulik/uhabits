@@ -99,7 +99,8 @@ android {
         }
     }
     buildFeatures.viewBinding = true
-    lint.abortOnError = false
+    lint.abortOnError = true
+    lint.baseline = file("lint-baseline.xml")
 }
 
 mokkery {
