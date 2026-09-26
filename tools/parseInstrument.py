@@ -43,7 +43,7 @@ for line in open(log_filename).readlines():
     if len(matches) > 0:
         current_method = matches[0]
 
-    matches = re.findall(r'OK \([0-9]* tests?\)', line)
+    matches = re.findall(r'OK \([1-9][0-9]* tests?\)', line)
     if len(matches) > 0:
         exit_code = 0
 

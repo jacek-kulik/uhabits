@@ -24,6 +24,11 @@ class ParseInstrumentTest(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertEqual("", result.stdout)
 
+    def test_rejects_empty_test_run(self):
+        result = self.parse("INSTRUMENTATION_CODE: -1\nOK (0 tests)\n")
+
+        self.assertNotEqual(0, result.returncode)
+
     def test_reports_failed_test_as_instrumentation_argument(self):
         result = self.parse(
             "100.0 INSTRUMENTATION_STATUS: class=example.HabitsTest\n"
