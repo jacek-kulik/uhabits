@@ -62,3 +62,26 @@ the legacy medium/large split after building matching app and test APKs.
 The checked-in `uhabits-android/lint-baseline.xml` records existing errors;
 warnings remain visible and new lint errors fail the gate. Review a finding
 before changing that baseline.
+
+## Review and evidence for AI-developed changes
+
+Before editing, write down the requested observable outcomes. After editing,
+check each against the implementation and test evidence. Review the whole diff
+for unrelated edits, weakened assertions, broad test filters, skips, and
+generated files; a passing test suite does not replace code review. A second
+review can help with risky changes, but still resolve findings against the
+actual code and requirements.
+
+Test edits need the same scrutiny as product edits. Inspect behavior before
+changing expected results, screenshot goldens, lint baselines, filters, or
+skips, and record why the new expectation is correct. Do not weaken checks just
+to get a green result. Select focused regression tests by risk: persistence,
+migrations, backup and restore, reminders, widgets, permissions, and lifecycle
+changes need targeted coverage, with emulator testing when device behavior is
+involved.
+
+Keep unrelated refactors separate from behavior changes where practical. In
+the completion report, list exact commands and mark each check passed, failed,
+skipped, or blocked. Say whether tests actually ran; compilation alone is not a
+test pass. Report meaningful coverage gaps, and do not call a branch ready while
+a required check is failing or unrun.
