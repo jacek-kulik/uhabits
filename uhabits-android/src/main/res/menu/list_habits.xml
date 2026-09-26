@@ -37,6 +37,12 @@
             app:showAsAction="always"/>
 
         <item
+            android:id="@+id/actionCalendar"
+            android:orderInCategory="20"
+            android:title="@string/calendar"
+            app:showAsAction="never" />
+
+        <item
             android:id="@+id/action_filter"
             android:icon="?iconFilter"
             android:title="@string/filter"

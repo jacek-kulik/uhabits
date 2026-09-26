@@ -56,12 +56,12 @@ class BackupTest : BaseUserInterfaceTest() {
         clearDownloadFolder()
         clearBackupFolder()
         exportFullBackup()
-        copyBackupToDownloadFolder()
+        val backupFilename = copyBackupToDownloadFolder()
         longClickText("Wake up early")
         clickMenu(DELETE)
         clickText("Yes")
         verifyDoesNotDisplayText("Wake up early")
-        importBackupFromDownloadFolder()
+        importBackupFromDownloadFolder(backupFilename)
         verifyDisplaysText("Wake up early")
     }
 

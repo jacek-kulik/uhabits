@@ -25,6 +25,7 @@ import androidx.preference.PreferenceManager
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiSelector
+import androidx.test.uiautomator.Until
 import org.isoron.uhabits.BaseUserInterfaceTest.Companion.device
 import org.isoron.uhabits.acceptance.steps.CommonSteps.clickText
 import org.isoron.uhabits.acceptance.steps.CommonSteps.pressBack
@@ -63,12 +64,18 @@ fun clearBackupFolder() {
     device.executeShellCommand("rm -rf ${backupFolder()}")
 }
 
-fun copyBackupToDownloadFolder() {
+fun copyBackupToDownloadFolder(): String {
     val srcListing = device.executeShellCommand("ls ${backupFolder()}")
     assertTrue(
         "Backup folder is empty. Contents: [$srcListing]",
         srcListing.contains(backupFilenamePrefix())
     )
+    val backupFilename = srcListing
+        .lineSequence()
+        .map(String::trim)
+        .filter { it.contains(" Backup ") && it.endsWith(".db") }
+        .filterNot { it.contains("Auto Backup") }
+        .maxOrNull() ?: error("Manual backup not found. Contents: [$srcListing]")
     device.executeShellCommand("rm -rf $DOWNLOAD_FOLDER")
     device.executeShellCommand("mv ${backupFolder()} $DOWNLOAD_FOLDER")
     device.executeShellCommand("chown root $DOWNLOAD_FOLDER")
@@ -77,6 +84,7 @@ fun copyBackupToDownloadFolder() {
         "Backup not found in download folder. Contents: [$dstListing]",
         dstListing.contains(backupFilenamePrefix())
     )
+    return backupFilename
 }
 
 fun selectPublicBackupFolder() {
@@ -92,7 +100,14 @@ fun clearPublicBackupFolderSelection() {
     prefs.edit().remove("publicBackupFolder").commit()
 }
 
-fun importBackupFromDownloadFolder() {
+private fun selectBackupFile(backupFilename: String) {
+    check(device.wait(Until.hasObject(By.text(backupFilename)), 10_000)) {
+        "Backup not shown in file picker: $backupFilename"
+    }
+    device.findObject(UiSelector().text(backupFilename)).click()
+}
+
+fun importBackupFromDownloadFolder(backupFilename: String) {
     clickMenu(SETTINGS)
     clickText("Import data")
     if (SDK_INT <= 23) {
@@ -109,7 +124,7 @@ fun importBackupFromDownloadFolder() {
         device.click(50, 90) // Click menu button
         device.findObject(UiSelector().textContains("Internal storage")).click()
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
+        selectBackupFile(backupFilename)
     } else if (SDK_INT <= 25) {
         while (!device.hasObject(By.textContains("Show file size"))) {
             device.click(720, 100) // Click overflow menu
@@ -124,12 +139,12 @@ fun importBackupFromDownloadFolder() {
         device.click(50, 90) // Click menu button
         device.findObject(UiSelector().textContains("Android")).click()
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
+        selectBackupFile(backupFilename)
     } else {
         device.click(50, 90) // Click menu button
         Thread.sleep(1000)
-        device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
+        device.findObject(UiSelector().resourceId("android:id/title").text("Downloads")).click()
+        selectBackupFile(backupFilename)
     }
 }
 
