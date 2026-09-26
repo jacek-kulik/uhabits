@@ -73,6 +73,10 @@
         </activity>
 
         <activity
+            android:name=".activities.calendar.CalendarActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".activities.settings.SettingsActivity"
             android:label="@string/settings">
             <meta-data

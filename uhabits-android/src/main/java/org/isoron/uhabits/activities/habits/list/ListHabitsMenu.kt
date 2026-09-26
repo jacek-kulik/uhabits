@@ -20,6 +20,7 @@
 package org.isoron.uhabits.activities.habits.list
 
 import android.content.Context
+import android.content.Intent
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -27,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import me.tatarka.inject.annotations.Inject
 import org.isoron.uhabits.R
+import org.isoron.uhabits.activities.calendar.CalendarActivity
 import org.isoron.uhabits.core.models.HabitList
 import org.isoron.uhabits.core.preferences.Preferences
 import org.isoron.uhabits.core.ui.ThemeSwitcher
@@ -125,6 +127,11 @@ class ListHabitsMenu(
 
             R.id.actionCreateHabit -> {
                 behavior.onCreateHabit()
+                return true
+            }
+
+            R.id.actionCalendar -> {
+                activity.startActivity(Intent(activity, CalendarActivity::class.java))
                 return true
             }
 
