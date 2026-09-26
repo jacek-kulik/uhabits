@@ -28,7 +28,7 @@ import kotlin.test.assertEquals
 
 class HabitCompletionCalendarTest : BaseUnitTest() {
     @Test
-    fun `counts due completions and excludes skipped archived and not due habits`() {
+    fun `counts due completions and excludes skipped and not due habits`() {
         val date = getToday()
         val completed = fixtures.createEmptyHabit().also {
             it.originalEntries.add(Entry(date, Entry.YES_MANUAL))
@@ -59,9 +59,25 @@ class HabitCompletionCalendarTest : BaseUnitTest() {
             date
         ).single()
 
-        assertEquals(1, result.completed)
-        assertEquals(2, result.due)
-        assertEquals(0.5, result.intensity)
+        assertEquals(2, result.completed)
+        assertEquals(3, result.due)
+        assertEquals(2.0 / 3.0, result.intensity)
+    }
+
+    @Test
+    fun `archived habits contribute to history through their last entry`() {
+        val today = getToday()
+        val habit = fixtures.createEmptyHabit().also {
+            it.isArchived = true
+            it.originalEntries.add(Entry(today.minus(3), Entry.YES_MANUAL))
+            it.originalEntries.add(Entry(today.minus(1), Entry.NO))
+            it.recompute()
+        }
+
+        val days = HabitCompletionCalendar.calculate(listOf(habit), today.minus(4), today)
+
+        assertEquals(listOf(0, 1, 1, 1, 0), days.map { it.due })
+        assertEquals(listOf(0, 1, 0, 0, 0), days.map { it.completed })
     }
 
     @Test

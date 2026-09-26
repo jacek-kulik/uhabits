@@ -34,6 +34,12 @@ data class HabitDayCompletion(
 }
 
 object HabitCompletionCalendar {
+    private data class TrackedHabit(
+        val habit: Habit,
+        val firstDate: LocalDate,
+        val lastDate: LocalDate
+    )
+
     fun calculate(
         habits: List<Habit>,
         from: LocalDate,
@@ -42,10 +48,15 @@ object HabitCompletionCalendar {
         if (from.isNewerThan(to)) return emptyList()
 
         val trackedHabits = habits
-            .filter { !it.isArchived }
             .mapNotNull { habit ->
-                val oldestEntry = habit.computedEntries.getKnown().lastOrNull()?.date
-                oldestEntry?.let { habit to it }
+                val entries = habit.computedEntries.getKnown()
+                if (entries.isEmpty()) {
+                    null
+                } else {
+                    // The archive date is not stored, so stop at the newest known entry.
+                    val lastDate = if (habit.isArchived) entries.first().date else to
+                    TrackedHabit(habit, entries.last().date, lastDate)
+                }
             }
 
         val result = mutableListOf<HabitDayCompletion>()
@@ -53,8 +64,8 @@ object HabitCompletionCalendar {
         while (date <= to) {
             var completed = 0
             var due = 0
-            trackedHabits.forEach { (habit, oldestEntry) ->
-                if (date < oldestEntry) return@forEach
+            trackedHabits.forEach { (habit, firstDate, lastDate) ->
+                if (date < firstDate || date > lastDate) return@forEach
 
                 val value = habit.computedEntries.get(date).value
                 if (value == Entry.SKIP || (!habit.isNumerical && value == Entry.YES_AUTO)) {

@@ -109,7 +109,7 @@ class CalendarActivity : AppCompatActivity() {
 
     private fun refresh() {
         val today = getToday()
-        val habits = appComponent.habitList.getFiltered(HabitMatcher()).toList()
+        val habits = appComponent.habitList.getFiltered(HabitMatcher(isArchivedAllowed = true)).toList()
         val firstWeekday = appComponent.preferences.firstWeekday
         val theme = themeSwitcher.currentTheme
         val accent = theme.color(org.isoron.uhabits.core.models.PaletteColor(3)).toInt()
