@@ -109,7 +109,7 @@ fun importBackupFromDownloadFolder() {
         device.click(50, 90) // Click menu button
         device.findObject(UiSelector().textContains("Internal storage")).click()
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains("Loop")).click()
+        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
     } else if (SDK_INT <= 25) {
         while (!device.hasObject(By.textContains("Show file size"))) {
             device.click(720, 100) // Click overflow menu
@@ -124,12 +124,12 @@ fun importBackupFromDownloadFolder() {
         device.click(50, 90) // Click menu button
         device.findObject(UiSelector().textContains("Android")).click()
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains("Loop")).click()
+        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
     } else {
         device.click(50, 90) // Click menu button
         Thread.sleep(1000)
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains("Loop")).click()
+        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
     }
 }
 
