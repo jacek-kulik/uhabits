@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add a calendar shortcut to the main toolbar.
+- Show current frequency progress for yes-or-no habits with non-daily targets.
+- Identify the independent fork and list its maintainers on the About screen.
+
+### Changed
+
+- Omit frequency progress for daily habits.
+- Add Polish translations for frequency progress labels.
+
 ### Personal fork
 
 - Build the debug app as **Habits Dev** with a separate app ID, so it can run

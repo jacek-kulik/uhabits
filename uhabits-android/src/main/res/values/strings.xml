@@ -116,6 +116,10 @@
     <string name="about">About</string>
     <string name="translators">Translators</string>
     <string name="developers">Developers</string>
+    <string name="fork_attribution">Independent fork maintained by Jacek Kulik (@jacek-kulik).</string>
+    <string name="fork_contributors">Fork contributors</string>
+    <string name="contributor_jacek_kulik">Jacek Kulik (@jacek-kulik)</string>
+    <string name="contributor_openai_codex">OpenAI Codex</string>
     <string name="version_n">Version %s</string>
     <string name="frequency">Frequency</string>
     <string name="checkmark">Checkmark</string>
@@ -226,7 +230,6 @@
     <string name="x_times_per_week">%d times per week</string>
     <string name="x_times_per_month">%d times per month</string>
     <string name="x_times_per_y_days">%d times in %d days</string>
-    <string name="frequency_progress_today">%1$d/%2$d today</string>
     <string name="frequency_progress_this_week">%1$d/%2$d this week</string>
     <string name="frequency_progress_this_month">%1$d/%2$d this month</string>
     <string name="frequency_progress_every_x_days">%1$d/%2$d every %3$d days</string>

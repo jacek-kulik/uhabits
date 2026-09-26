@@ -22,6 +22,7 @@ import org.isoron.platform.time.DayOfWeek
 import org.isoron.platform.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class FrequencyProgressTest {
     private val today = LocalDate(2026, 6, 10)
@@ -95,7 +96,7 @@ class FrequencyProgressTest {
     }
 
     @Test
-    fun dailyProgressIncludesOnlyToday() {
+    fun dailyProgressIsOmitted() {
         val entries = EntryList().apply {
             add(Entry(today.minus(1), Entry.YES_MANUAL))
             add(Entry(today, Entry.YES_MANUAL))
@@ -108,6 +109,6 @@ class FrequencyProgressTest {
             DayOfWeek.MONDAY
         )
 
-        assertEquals(FrequencyProgress(1, 1, FrequencyProgressPeriod.TODAY), actual)
+        assertNull(actual)
     }
 }

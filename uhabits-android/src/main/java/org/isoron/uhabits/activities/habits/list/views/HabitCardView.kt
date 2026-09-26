@@ -334,11 +334,6 @@ class HabitCardView(
         }
 
         progressLabel.text = when (progress.period) {
-            FrequencyProgressPeriod.TODAY -> resources.getString(
-                R.string.frequency_progress_today,
-                progress.completed,
-                progress.target
-            )
             FrequencyProgressPeriod.THIS_WEEK -> resources.getString(
                 R.string.frequency_progress_this_week,
                 progress.completed,

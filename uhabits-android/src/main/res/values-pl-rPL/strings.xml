@@ -119,6 +119,10 @@
     <string name="about">O aplikacji</string>
     <string name="translators">Tłumacze</string>
     <string name="developers">Programiści</string>
+    <string name="fork_attribution">Niezależny fork utrzymywany przez Jacka Kulika (@jacek-kulik).</string>
+    <string name="fork_contributors">Współtwórcy forka</string>
+    <string name="contributor_jacek_kulik">Jacek Kulik (@jacek-kulik)</string>
+    <string name="contributor_openai_codex">OpenAI Codex</string>
     <string name="version_n">Wersja %s</string>
     <string name="frequency">Częstotliwość</string>
     <string name="checkmark">Znacznik</string>
@@ -207,6 +211,10 @@
     <string name="x_times_per_week">%d razy w tygodniu</string>
     <string name="x_times_per_month">%d razy w miesiącu</string>
     <string name="x_times_per_y_days">%d razy w ciągu %d dni</string>
+    <string name="frequency_progress_this_week">%1$d/%2$d w tym tygodniu</string>
+    <string name="frequency_progress_this_month">%1$d/%2$d w tym miesiącu</string>
+    <string name="frequency_progress_every_x_days">%1$d/%2$d co %3$d dni</string>
+    <string name="frequency_progress_per_x_days">%1$d/%2$d w ciągu ostatnich %3$d dni</string>
     <string name="yes_or_no_short_example">np. ćwiczenia</string>
     <string name="color">Kolor</string>
     <string name="example_target">np. 15</string>

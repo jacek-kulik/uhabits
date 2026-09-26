@@ -40,6 +40,10 @@ class AboutTest : BaseUserInterfaceTest() {
         verifyDisplaysText("Loop Habit Tracker")
         verifyDisplaysText("Rate this app on Google Play")
         verifyDisplaysText("Developers")
+        verifyDisplaysText("Independent fork maintained by Jacek Kulik (@jacek-kulik).")
+        verifyDisplaysText("Fork contributors")
+        verifyDisplaysText("Jacek Kulik (@jacek-kulik)")
+        verifyDisplaysText("OpenAI Codex")
         verifyDisplaysText("Translators")
     }
 
@@ -48,6 +52,7 @@ class AboutTest : BaseUserInterfaceTest() {
         launchApp()
         clickMenu(SETTINGS)
         clickText("About")
+        verifyDisplaysText("Jacek Kulik (@jacek-kulik)")
         verifyDisplaysText("Translators")
     }
 }
