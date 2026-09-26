@@ -265,7 +265,7 @@ apk_package() {
 }
 
 # shellcheck disable=SC2016
-android_test() {
+android_test_run() {
     API=$1
     AVDNAME=${AVD_PREFIX}${API}
     local app_apk test_apk package_name test_package
@@ -283,6 +283,7 @@ android_test() {
         return 1
     fi
 
+    ANDROID_TEST_EMULATOR_API=$API
     android_launch $API || return 1
 
     if [ -n "$RELEASE" ]; then
@@ -331,6 +332,50 @@ android_test() {
     return 0
 }
 
+android_stop() {
+    local API=$1
+    local AVDNAME=${AVD_PREFIX}${API}
+    local PORT=6${API}0
+    local SERIAL=emulator-${PORT}
+    local attempt
+
+    if ! pgrep -f "$AVDNAME" >/dev/null; then
+        return 0
+    fi
+
+    log_info "Stopping Android emulator..."
+    "${ANDROID_HOME}/platform-tools/adb" -s "$SERIAL" emu kill >/dev/null 2>&1 || true
+
+    for ((attempt=0; attempt<30; attempt++)); do
+        if ! pgrep -f "$AVDNAME" >/dev/null; then
+            return 0
+        fi
+        sleep 1
+    done
+
+    log_error "Android emulator did not stop gracefully; terminating it..."
+    while pgrep -f "$AVDNAME" >/dev/null; do
+        pkill -9 -f "$AVDNAME"
+        sleep 1
+    done
+}
+
+android_test() {
+    local API=$1
+    local ret_code=0
+
+    ANDROID_TEST_EMULATOR_API=""
+    android_test_run "$API" || ret_code=$?
+
+    if [[ "$ANDROID_TEST_EMULATOR_API" == "$API" ]]; then
+        if ! android_stop "$API" && [ "$ret_code" -eq 0 ]; then
+            ret_code=1
+        fi
+    fi
+
+    return "$ret_code"
+}
+
 android_test_parallel() {
     # Launch background processes
     PIDS=""
@@ -346,7 +391,6 @@ android_test_parallel() {
             else
                 log_error "API $API: Failed"
             fi
-            pkill -9 -f ${AVD_PREFIX}${API}
             exit $ret_code
         )&
 	PIDS+=" $!"

@@ -65,6 +65,10 @@ for setting in auto_time auto_time_zone window_animation_scale transition_animat
 done
 
 ./build.sh android-tests 36 2>&1 | tee "$log_dir/device-tests.log"
+if pgrep -f '[u]habitsTest36' >/dev/null; then
+    printf '%s\n' 'Local test gate: Android test emulator is still running after the device suite.' >&2
+    exit 1
+fi
 "$repo_dir/tools/check-local-gate-state.sh"
 [[ "$(git rev-parse HEAD)" == "$head" ]] || {
     printf '%s\n' 'Local test gate: HEAD changed during testing.' >&2
