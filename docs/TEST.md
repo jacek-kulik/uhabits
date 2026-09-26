@@ -17,6 +17,9 @@ To run medium tests, it is recommended to use the `build.sh` script.
 2. Run `./build.sh android-tests API` to run the tests on a single API.
 3. Run `./build.sh android-tests-parallel API API...` to run the tests on multiple APIs in parallel.
 
+The dedicated test emulator is shut down when a test run finishes, including
+when the instrumented tests fail.
+
 Note that instrumented tests are designed to run on a clean install, inside an emulator. They will not work on actual devices. All tests are also designed for a particular screen size, namely the Nexus 4 configuration (4.7" 768x1280 xhdpi), and a particular locale, namely English (US). Furthermore:
 
 - No additional apps should be installed on the device;

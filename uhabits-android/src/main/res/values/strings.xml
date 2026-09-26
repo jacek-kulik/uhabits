@@ -226,6 +226,11 @@
     <string name="x_times_per_week">%d times per week</string>
     <string name="x_times_per_month">%d times per month</string>
     <string name="x_times_per_y_days">%d times in %d days</string>
+    <string name="frequency_progress_today">%1$d/%2$d today</string>
+    <string name="frequency_progress_this_week">%1$d/%2$d this week</string>
+    <string name="frequency_progress_this_month">%1$d/%2$d this month</string>
+    <string name="frequency_progress_every_x_days">%1$d/%2$d every %3$d days</string>
+    <string name="frequency_progress_per_x_days">%1$d/%2$d per %3$d days</string>
     <string name="yes_or_no_short_example">e.g. Exercise</string>
     <string name="color">Color</string>
     <string name="example_target">e.g. 15</string>

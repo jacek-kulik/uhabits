@@ -19,14 +19,20 @@
 
 package org.isoron.uhabits.activities.habits.list.views
 
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import org.isoron.platform.time.LocalDate
 import org.isoron.platform.time.getToday
 import org.isoron.uhabits.BaseViewTest
 import org.isoron.uhabits.R
+import org.isoron.uhabits.core.models.FrequencyProgress
+import org.isoron.uhabits.core.models.FrequencyProgressPeriod
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.core.models.PaletteColor
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -57,6 +63,7 @@ class HabitCardViewTest : BaseViewTest() {
             habit = habit1
             values = entries
             score = habit1.scores[today].value
+            frequencyProgress = FrequencyProgress(2, 3, FrequencyProgressPeriod.THIS_WEEK)
             isSelected = false
             buttonCount = 5
         }
@@ -99,5 +106,25 @@ class HabitCardViewTest : BaseViewTest() {
         habit1.observable.notifyListeners()
         Thread.sleep(500)
         assertRenders(view, "$PATH/render_changed.png")
+    }
+
+    @Test
+    fun testCustomDayProgressLabel() {
+        view.frequencyProgress = FrequencyProgress(
+            1,
+            1,
+            FrequencyProgressPeriod.CUSTOM_DAYS,
+            3
+        )
+
+        assertTrue(findTexts(view).contains("1/1 every 3 days"))
+    }
+
+    private fun findTexts(view: View): List<String> {
+        return when (view) {
+            is TextView -> listOf(view.text.toString())
+            is ViewGroup -> (0 until view.childCount).flatMap { findTexts(view.getChildAt(it)) }
+            else -> emptyList()
+        }
     }
 }

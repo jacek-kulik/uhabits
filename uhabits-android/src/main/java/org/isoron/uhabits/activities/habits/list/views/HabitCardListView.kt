@@ -38,6 +38,7 @@ import androidx.recyclerview.widget.RecyclerView
 import me.tatarka.inject.annotations.Inject
 import org.isoron.uhabits.R
 import org.isoron.uhabits.activities.common.views.BundleSavedState
+import org.isoron.uhabits.core.models.FrequencyProgress
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.inject.ActivityContext
 
@@ -113,6 +114,7 @@ class HabitCardListView(
         habit: Habit,
         score: Double,
         checkmarks: IntArray,
+        frequencyProgress: FrequencyProgress?,
         notes: Array<String>,
         selected: Boolean
     ): View {
@@ -123,6 +125,7 @@ class HabitCardListView(
         cardView.buttonCount = checkmarkCount
         cardView.dataOffset = dataOffset
         cardView.score = score
+        cardView.frequencyProgress = frequencyProgress
         cardView.unit = habit.unit
         cardView.threshold = habit.targetValue / habit.frequency.denominator
         cardView.notes = notes
