@@ -30,8 +30,8 @@ data class HabitMatcher(
     fun matches(habit: Habit): Boolean {
         if (!isArchivedAllowed && habit.isArchived) return false
         if (isReminderRequired && !habit.hasReminder()) return false
-        if (!isCompletedAllowed && habit.isCompletedToday()) return false
-        if (!isEnteredAllowed && habit.isEnteredToday()) {
+        if (!isCompletedAllowed && habit.isExplicitlyCompletedToday()) return false
+        if (!isEnteredAllowed && habit.isExplicitlyEnteredToday()) {
             // A partial count is entered, but an AT_LEAST habit is not yet complete.
             if (!habit.isNumerical ||
                 habit.targetType != NumericalHabitType.AT_LEAST ||
