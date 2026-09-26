@@ -51,6 +51,10 @@ class CalendarActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        savedInstanceState?.let {
+            year = it.getInt("calendarYear", year)
+            month = it.getInt("calendarMonth", month)
+        }
         appComponent = (applicationContext as HabitsApplication).component
         themeSwitcher = AndroidThemeSwitcher(this, appComponent.preferences)
         themeSwitcher.apply()
@@ -87,6 +91,12 @@ class CalendarActivity : AppCompatActivity() {
             changeMonth(1)
         }
         refresh()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt("calendarYear", year)
+        outState.putInt("calendarMonth", month)
+        super.onSaveInstanceState(outState)
     }
 
     private fun changeMonth(delta: Int) {
