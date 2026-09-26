@@ -18,6 +18,8 @@
  */
 package org.isoron.uhabits.core.commands
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import org.isoron.uhabits.core.AppScope
 import org.isoron.uhabits.core.tasks.Task
@@ -29,12 +31,13 @@ open class CommandRunner(
     private val taskRunner: TaskRunner
 ) {
     private val listeners: MutableList<Listener> = mutableListOf()
+    private val commandMutex = Mutex()
 
     open fun run(command: Command) {
         taskRunner.execute(
             object : Task {
                 override suspend fun doInBackground() {
-                    command.run()
+                    commandMutex.withLock { command.run() }
                 }
                 override fun onPostExecute() {
                     notifyListeners(command)
