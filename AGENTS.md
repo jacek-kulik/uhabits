@@ -85,6 +85,8 @@ original project; follow the fork owner's request when it differs.
 
 ## AI development review rules
 
+- Provide English and Polish entries in `uhabits-android/src/main/res/values/strings.xml` and `uhabits-android/src/main/res/values-pl-rPL/strings.xml` for every new or changed user-facing app string. Add translations retroactively when modifying or extending an existing feature; do not rely on the English fallback for Polish users.
+- Before completing a user-visible feature or fix, check the release rules in `docs/GUIDELINES.md` and update the app version and changelog when required. Use the established patch increment for bug fixes, minor increment for new features, and major increment for major features; update both `versionName` and `versionCode` consistently.
 - Before editing, turn the request into a short list of observable outcomes.
   After editing, check each outcome against the implementation and test
   evidence; do not infer correctness from a successful build alone.

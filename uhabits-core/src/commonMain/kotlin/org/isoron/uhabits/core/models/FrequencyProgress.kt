@@ -22,7 +22,6 @@ import org.isoron.platform.time.DayOfWeek
 import org.isoron.platform.time.LocalDate
 
 enum class FrequencyProgressPeriod {
-    TODAY,
     THIS_WEEK,
     THIS_MONTH,
     CUSTOM_DAYS
@@ -40,9 +39,10 @@ data class FrequencyProgress(
             entries: EntryList,
             today: LocalDate,
             firstWeekday: DayOfWeek
-        ): FrequencyProgress {
+        ): FrequencyProgress? {
+            if (frequency.denominator == 1) return null
+
             val (from, period) = when (frequency.denominator) {
-                1 -> today to FrequencyProgressPeriod.TODAY
                 7 -> today.startOfWeek(firstWeekday) to FrequencyProgressPeriod.THIS_WEEK
                 30, 31 -> today.startOfMonth() to FrequencyProgressPeriod.THIS_MONTH
                 else -> today.minus(frequency.denominator - 1) to FrequencyProgressPeriod.CUSTOM_DAYS

@@ -66,6 +66,11 @@
                     android:gravity="center"
                     android:text="" />
 
+                <TextView
+                    style="@style/About.Item"
+                    android:gravity="center"
+                    android:text="@string/fork_attribution" />
+
             </LinearLayout>
 
             <LinearLayout
@@ -184,6 +189,25 @@
                     android:id="@+id/tvContributors"
                     style="@style/About.Item.Clickable"
                     android:text="@string/view_all_contributors" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/Card"
+                android:gravity="center">
+
+                <TextView
+                    style="@style/CardHeader"
+                    android:text="@string/fork_contributors"
+                    android:textColor="?aboutScreenColor" />
+
+                <TextView
+                    style="@style/About.Item"
+                    android:text="@string/contributor_jacek_kulik" />
+
+                <TextView
+                    style="@style/About.Item"
+                    android:text="@string/contributor_openai_codex" />
 
             </LinearLayout>
 
