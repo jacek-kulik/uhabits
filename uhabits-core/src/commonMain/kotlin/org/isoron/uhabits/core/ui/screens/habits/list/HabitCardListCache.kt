@@ -26,10 +26,12 @@ import org.isoron.uhabits.core.commands.Command
 import org.isoron.uhabits.core.commands.CommandRunner
 import org.isoron.uhabits.core.commands.CreateRepetitionCommand
 import org.isoron.uhabits.core.io.Logging
+import org.isoron.uhabits.core.models.FrequencyProgress
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.core.models.HabitList
 import org.isoron.uhabits.core.models.HabitList.Order
 import org.isoron.uhabits.core.models.HabitMatcher
+import org.isoron.uhabits.core.preferences.Preferences
 import org.isoron.uhabits.core.tasks.Task
 import org.isoron.uhabits.core.tasks.TaskRunner
 
@@ -51,6 +53,7 @@ import org.isoron.uhabits.core.tasks.TaskRunner
 class HabitCardListCache(
     private val allHabits: HabitList,
     private val commandRunner: CommandRunner,
+    private val preferences: Preferences,
     taskRunner: TaskRunner,
     logging: Logging
 ) : CommandRunner.Listener {
@@ -77,6 +80,11 @@ class HabitCardListCache(
     @Synchronized
     fun getNotes(habitId: Long): Array<String> {
         return data.notes[habitId]!!
+    }
+
+    @Synchronized
+    fun getFrequencyProgress(habitId: Long): FrequencyProgress? {
+        return data.frequencyProgress[habitId]
     }
 
     @Synchronized
@@ -166,6 +174,7 @@ class HabitCardListCache(
         data.checkmarks.remove(id)
         data.notes.remove(id)
         data.scores.remove(id)
+        data.frequencyProgress.remove(id)
         listener.onItemRemoved(position)
     }
 
@@ -210,6 +219,7 @@ class HabitCardListCache(
         val checkmarks: MutableMap<Long?, IntArray>
         val scores: MutableMap<Long?, Double>
         val notes: MutableMap<Long?, Array<String>>
+        val frequencyProgress: MutableMap<Long?, FrequencyProgress?>
 
         @Synchronized
         fun copyCheckmarksFrom(oldData: CacheData) {
@@ -250,6 +260,13 @@ class HabitCardListCache(
         }
 
         @Synchronized
+        fun copyFrequencyProgressFrom(oldData: CacheData) {
+            for (id in idToHabit.keys) {
+                frequencyProgress[id] = oldData.frequencyProgress[id]
+            }
+        }
+
+        @Synchronized
         fun fetchHabits() {
             for (h in filteredHabits) {
                 if (h.id == null) continue
@@ -266,6 +283,7 @@ class HabitCardListCache(
             checkmarks = mutableMapOf()
             scores = mutableMapOf()
             notes = mutableMapOf()
+            frequencyProgress = mutableMapOf()
         }
     }
 
@@ -297,6 +315,7 @@ class HabitCardListCache(
             newData.copyScoresFrom(data)
             newData.copyCheckmarksFrom(data)
             newData.copyNoteIndicatorsFrom(data)
+            newData.copyFrequencyProgressFrom(data)
             val today = getToday()
             val dateFrom = today.minus(checkmarkCount - 1)
             if (runner != null) runner!!.publishProgress(this, -1)
@@ -305,6 +324,16 @@ class HabitCardListCache(
                 val habit = newData.habits[position]
                 if (targetId != null && targetId != habit.id) continue
                 newData.scores[habit.id] = habit.scores[today].value
+                newData.frequencyProgress[habit.id] = if (habit.isNumerical) {
+                    null
+                } else {
+                    FrequencyProgress.calculate(
+                        habit.frequency,
+                        habit.originalEntries,
+                        today,
+                        preferences.firstWeekday
+                    )
+                }
                 val checkmarkList = mutableListOf<Int>()
                 val noteList = mutableListOf<String>()
                 for ((_, value, note) in habit.computedEntries.getByInterval(dateFrom, today)) {
@@ -341,6 +370,7 @@ class HabitCardListCache(
             data.scores[id] = newData.scores[id]!!
             data.checkmarks[id] = newData.checkmarks[id]!!
             data.notes[id] = newData.notes[id]!!
+            data.frequencyProgress[id] = newData.frequencyProgress[id]
             listener.onItemInserted(position)
         }
 
@@ -369,17 +399,21 @@ class HabitCardListCache(
             val oldScore = data.scores[id]!!
             val oldCheckmarks = data.checkmarks[id]
             val oldNoteIndicators = data.notes[id]
+            val oldFrequencyProgress = data.frequencyProgress[id]
             val newScore = newData.scores[id]!!
             val newCheckmarks = newData.checkmarks[id]!!
             val newNoteIndicators = newData.notes[id]!!
+            val newFrequencyProgress = newData.frequencyProgress[id]
             var unchanged = true
             if (oldScore != newScore) unchanged = false
             if (!oldCheckmarks.contentEquals(newCheckmarks)) unchanged = false
             if (!oldNoteIndicators.contentEquals(newNoteIndicators)) unchanged = false
+            if (oldFrequencyProgress != newFrequencyProgress) unchanged = false
             if (unchanged) return
             data.scores[id] = newScore
             data.checkmarks[id] = newCheckmarks
             data.notes[id] = newNoteIndicators
+            data.frequencyProgress[id] = newFrequencyProgress
             listener.onItemChanged(position)
         }
 

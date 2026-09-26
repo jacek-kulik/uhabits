@@ -27,6 +27,11 @@ import org.isoron.uhabits.core.BaseUnitTest
 import org.isoron.uhabits.core.commands.CreateRepetitionCommand
 import org.isoron.uhabits.core.commands.DeleteHabitsCommand
 import org.isoron.uhabits.core.models.Entry
+import org.isoron.uhabits.core.models.Frequency
+import org.isoron.uhabits.core.models.FrequencyProgress
+import org.isoron.uhabits.core.models.FrequencyProgressPeriod
+import org.isoron.uhabits.core.preferences.MemoryStorage
+import org.isoron.uhabits.core.preferences.Preferences
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -35,16 +40,20 @@ import kotlin.test.assertEquals
 class HabitCardListCacheTest : BaseUnitTest() {
     private lateinit var cache: HabitCardListCache
     private lateinit var listener: HabitCardListCache.Listener
+    private lateinit var preferences: Preferences
     var today = LocalDate(2015, 1, 25)
 
     @BeforeTest
     override fun setUp() {
         super.setUp()
+        val storage = MemoryStorage()
+        storage.putString("pref_first_weekday", "2")
+        preferences = Preferences(storage)
         habitList.removeAll()
         for (i in 0..9) {
             if (i == 3) habitList.add(fixtures.createLongHabit()) else habitList.add(fixtures.createShortHabit())
         }
-        cache = HabitCardListCache(habitList, commandRunner, taskRunner, mock())
+        cache = HabitCardListCache(habitList, commandRunner, preferences, taskRunner, mock())
         cache.setCheckmarkCount(10)
         cache.refreshAllHabits()
         cache.onAttached()
@@ -91,6 +100,18 @@ class HabitCardListCacheTest : BaseUnitTest() {
             .getByInterval(today.minus(9), today)
             .map { it.value }.toIntArray()
         assertContentEquals(expectedCheckmarks, actualCheckmarks)
+    }
+
+    @Test
+    fun testGetFrequencyProgress() {
+        val habit = (0 until cache.habitCount)
+            .map { cache.getHabitByPosition(it)!! }
+            .first { it.frequency == Frequency(2, 3) }
+
+        assertEquals(
+            FrequencyProgress(1, 2, FrequencyProgressPeriod.CUSTOM_DAYS, 3),
+            cache.getFrequencyProgress(habit.id!!)
+        )
     }
 
     @Test

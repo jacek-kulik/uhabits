@@ -127,9 +127,18 @@ class HabitCardListAdapter(
         val habit = cache.getHabitByPosition(position)
         val score = cache.getScore(habit!!.id!!)
         val checkmarks = cache.getCheckmarks(habit.id!!)
+        val frequencyProgress = cache.getFrequencyProgress(habit.id!!)
         val notes = cache.getNotes(habit.id!!)
         val selected = selected.contains(habit)
-        listView!!.bindCardView(holder, habit, score, checkmarks, notes, selected)
+        listView!!.bindCardView(
+            holder,
+            habit,
+            score,
+            checkmarks,
+            frequencyProgress,
+            notes,
+            selected
+        )
     }
 
     override fun onViewAttachedToWindow(holder: HabitCardViewHolder) {

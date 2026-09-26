@@ -40,6 +40,8 @@ import org.isoron.platform.time.LocalDate
 import org.isoron.platform.time.getToday
 import org.isoron.uhabits.R
 import org.isoron.uhabits.activities.common.views.RingView
+import org.isoron.uhabits.core.models.FrequencyProgress
+import org.isoron.uhabits.core.models.FrequencyProgressPeriod
 import org.isoron.uhabits.core.models.Habit
 import org.isoron.uhabits.core.models.ModelObservable
 import org.isoron.uhabits.core.ui.screens.habits.list.ListHabitsBehavior
@@ -123,10 +125,18 @@ class HabitCardView(
             numberPanel.notes = values
         }
 
+    var frequencyProgress: FrequencyProgress? = null
+        set(value) {
+            field = value
+            updateProgressLabel()
+        }
+
     var checkmarkPanel: CheckmarkPanelView
     private var numberPanel: NumberPanelView
     private var innerFrame: LinearLayout
-    private var label: TextView
+    private var labelContainer: LinearLayout
+    private var nameLabel: TextView
+    private var progressLabel: TextView
     private var scoreRing: RingView
 
     private var currentToggleTaskId = 0
@@ -143,13 +153,30 @@ class HabitCardView(
             setThickness(thickness)
         }
 
-        label = TextView(context).apply {
+        nameLabel = TextView(context).apply {
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
-            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
             if (SDK_INT >= Build.VERSION_CODES.Q) {
                 breakStrategy = BREAK_STRATEGY_BALANCED
             }
+        }
+
+        progressLabel = TextView(context).apply {
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            textSize = 12f
+            setTextColor(sres.getColor(R.attr.contrast60))
+            visibility = View.GONE
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        }
+
+        labelContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f)
+            addView(nameLabel)
+            addView(progressLabel)
         }
 
         checkmarkPanel = checkmarkPanelFactory.create().apply {
@@ -190,7 +217,7 @@ class HabitCardView(
             elevation = dp(1f)
 
             addView(scoreRing)
-            addView(label)
+            addView(labelContainer)
             addView(checkmarkPanel)
             addView(numberPanel)
 
@@ -272,10 +299,11 @@ class HabitCardView(
         }
 
         val c = getActiveColor(h)
-        label.apply {
+        nameLabel.apply {
             text = h.name
             setTextColor(c)
         }
+        updateProgressLabel()
         scoreRing.apply {
             setColor(c)
         }
@@ -296,6 +324,43 @@ class HabitCardView(
                 false -> View.GONE
             }
         }
+    }
+
+    private fun updateProgressLabel() {
+        val progress = frequencyProgress
+        if (progress == null || habit?.isNumerical != false) {
+            progressLabel.visibility = View.GONE
+            return
+        }
+
+        progressLabel.text = when (progress.period) {
+            FrequencyProgressPeriod.TODAY -> resources.getString(
+                R.string.frequency_progress_today,
+                progress.completed,
+                progress.target
+            )
+            FrequencyProgressPeriod.THIS_WEEK -> resources.getString(
+                R.string.frequency_progress_this_week,
+                progress.completed,
+                progress.target
+            )
+            FrequencyProgressPeriod.THIS_MONTH -> resources.getString(
+                R.string.frequency_progress_this_month,
+                progress.completed,
+                progress.target
+            )
+            FrequencyProgressPeriod.CUSTOM_DAYS -> resources.getString(
+                if (progress.target == 1) {
+                    R.string.frequency_progress_every_x_days
+                } else {
+                    R.string.frequency_progress_per_x_days
+                },
+                progress.completed,
+                progress.target,
+                progress.periodDays
+            )
+        }
+        progressLabel.visibility = View.VISIBLE
     }
 
     private fun triggerRipple(x: Float, y: Float) {
