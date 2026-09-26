@@ -63,6 +63,49 @@ original project; follow the fork owner's request when it differs.
   diff and Git status before committing or pushing. Never push without a
   request for that change.
 
+## Local gate before dev
+
+- For behavior changes, add a focused test that would fail for the reported bug
+  or missing behavior when practical. Review test assertions against the user
+  requirement; an AI-authored test can reproduce an AI-authored mistake.
+- Once a task branch is committed, run `tools/local-test-gate.sh` before calling
+  it ready for `dev`. The script verifies the remote `dev` tip, requires a clean
+  branch containing that tip, reruns JVM tests, checks formatting and lint,
+  builds both debug APKs, and runs the full Android suite on one dedicated
+  emulator.
+- A build-only result or missing emulator is an incomplete gate. Report the
+  failing check and tested commit, and leave `dev` untouched. Follow
+  `docs/TEST.md` for emulator setup and device-test limitations.
+- Give every concrete `androidTest` class a `MediumTest` or `LargeTest` size
+  annotation. The gate runs those groups in isolation to prevent shared device
+  state from leaking between incompatible test categories.
+- Fix new lint findings. Do not regenerate `uhabits-android/lint-baseline.xml`
+  or accept screenshot goldens just to make a failing gate pass; review the
+  specific change to either baseline first.
+
+## AI development review rules
+
+- Before editing, turn the request into a short list of observable outcomes.
+  After editing, check each outcome against the implementation and test
+  evidence; do not infer correctness from a successful build alone.
+- Review the complete diff before committing. Look for unrelated changes,
+  weakened or deleted assertions, skipped tests, broad filters, and generated
+  files. Passing tests do not replace this review. For risky changes, request a
+  second review when available and resolve any actionable findings.
+- Treat test changes as behavior changes. Explain why changed expectations,
+  screenshot goldens, lint baselines, test filters, or skips are correct, and
+  inspect the relevant output or behavior before accepting them. Never weaken a
+  test only to make the gate pass.
+- Choose checks by risk. Changes to persistence, migrations, backup or restore,
+  reminders, widgets, permissions, or lifecycle behavior need focused
+  regression coverage and emulator testing when device behavior is involved.
+- Keep behavior changes and unrelated refactors separate where practical.
+  Commit coherent, reviewable changes with clear messages.
+- In the completion report, list the exact checks run and mark each as passed,
+  failed, skipped, or blocked. Distinguish compilation from test execution and
+  state any relevant coverage gap. Do not call the task ready while a required
+  check is failing or unrun.
+
 The outline of this guide was informed by the Android team's
 [`nowinandroid/AGENTS.md`](https://github.com/android/nowinandroid/blob/main/AGENTS.md);
 all project details and commands above come from this repository.

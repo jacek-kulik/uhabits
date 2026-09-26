@@ -19,17 +19,22 @@
 package org.isoron.uhabits.acceptance.steps
 
 import android.os.Build.VERSION.SDK_INT
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import org.isoron.uhabits.BaseUserInterfaceTest
+import org.isoron.uhabits.R
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
 object WidgetSteps {
+    private val imageViewId: String
+        get() = InstrumentationRegistry.getInstrumentation().targetContext.resources
+            .getResourceName(R.id.imageView)
+
     @Throws(Exception::class)
     fun clickCheckmarkWidget() {
-        val viewId = "org.isoron.uhabits:id/imageView"
-        BaseUserInterfaceTest.device.findObject(UiSelector().resourceId(viewId)).click()
+        BaseUserInterfaceTest.device.findObject(UiSelector().resourceId(imageViewId)).click()
     }
 
     @Throws(Exception::class)
@@ -69,9 +74,8 @@ object WidgetSteps {
 
     @Throws(Exception::class)
     fun verifyCheckmarkWidgetIsShown() {
-        val viewId = "org.isoron.uhabits:id/imageView"
         assertTrue(
-            BaseUserInterfaceTest.device.findObject(UiSelector().resourceId(viewId)).exists()
+            BaseUserInterfaceTest.device.findObject(UiSelector().resourceId(imageViewId)).exists()
         )
         assertFalse(
             BaseUserInterfaceTest.device.findObject(UiSelector().textStartsWith("Habit deleted"))

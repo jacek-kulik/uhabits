@@ -53,6 +53,10 @@ object ListHabitsSteps {
                 clickViewWithId(R.id.action_filter)
                 CommonSteps.clickText(R.string.hide_completed)
             }
+            MenuItem.SEARCH -> {
+                clickViewWithId(R.id.action_filter)
+                CommonSteps.clickText(R.string.search)
+            }
             else -> throw RuntimeException()
         }
         device.waitForIdle()
@@ -128,6 +132,6 @@ object ListHabitsSteps {
     }
 
     enum class MenuItem {
-        ABOUT, HELP, SETTINGS, EDIT, DELETE, ARCHIVE, TOGGLE_ARCHIVED, UNARCHIVE, TOGGLE_COMPLETED, ADD
+        ABOUT, HELP, SETTINGS, EDIT, DELETE, ARCHIVE, TOGGLE_ARCHIVED, UNARCHIVE, TOGGLE_COMPLETED, ADD, SEARCH
     }
 }

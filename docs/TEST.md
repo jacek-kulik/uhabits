@@ -24,3 +24,64 @@ Note that instrumented tests are designed to run on a clean install, inside an e
 - All animations must be manually disabled.
 
 If there are failing view tests (that is, if some custom views do not render exactly like the prerendered images we have), then both the actual and expected images will be automatically downloaded from the device to the folder `uhabits-android/build/outputs`. After verifying the differences, if you feel that the actual images are actually fine and should replace the prerendered ones, then run `./build.sh android-accept-images`.
+
+## Local testing in this fork
+
+There is no GitHub CI gate. Work on a task branch from a freshly fetched
+`origin/dev`, add focused regression tests for changed behavior, and use the
+checked-in Gradle wrapper after `source tools/dev-env.sh`. During development,
+run the relevant JVM tests, `ktlintCheck`, and `assembleDebug`.
+
+Before proposing a committed branch for `dev`, run `tools/local-test-gate.sh`.
+It requires a clean task branch containing the current remote `dev` tip. It
+reruns the gate's regression tests plus the core and Android JVM tests, checks
+style and lint, builds the app and test APKs, then runs every classified medium
+and large test on exactly one ready API 36 emulator. All concrete
+`androidTest` classes must have a size annotation so none fall outside this
+sequence. The gate checks Git state again afterward. Logs are under
+`build/local-test-gate/<commit>`.
+If `dev` advances, update the task branch and rerun the gate; never merge into
+local `dev` as a workaround.
+
+The full gate needs a dedicated emulator. Install the SDK emulator and an
+Android system image if they are missing, then create an AVD with the Nexus 4
+screen configuration used by the image tests: 768x1280 at density 320. Set the
+locale to English (US), keep the home screen clean, and disable animations.
+Use an emulator with a normal display backend for screenshot comparisons.
+Check `adb devices` before running the gate; a physical phone is not an
+acceptable substitute. The gate verifies the screen, density, locale, and boot
+state, then removes only the Dev app and its test package before running tests.
+`build.sh android-setup` deletes the named AVD, so inspect it before using
+that command. Do not accept new golden images merely to make the gate green.
+
+The older `build.sh build` command runs `ktlintFormat` and
+`kotlinUpgradeYarnLock`, which can edit source or lock files. Use the local
+gate for pre-`dev` verification. `build.sh android-tests` remains available for
+the legacy medium/large split after building matching app and test APKs.
+
+The checked-in `uhabits-android/lint-baseline.xml` records existing errors;
+warnings remain visible and new lint errors fail the gate. Review a finding
+before changing that baseline.
+
+## Review and evidence for AI-developed changes
+
+Before editing, write down the requested observable outcomes. After editing,
+check each against the implementation and test evidence. Review the whole diff
+for unrelated edits, weakened assertions, broad test filters, skips, and
+generated files; a passing test suite does not replace code review. A second
+review can help with risky changes, but still resolve findings against the
+actual code and requirements.
+
+Test edits need the same scrutiny as product edits. Inspect behavior before
+changing expected results, screenshot goldens, lint baselines, filters, or
+skips, and record why the new expectation is correct. Do not weaken checks just
+to get a green result. Select focused regression tests by risk: persistence,
+migrations, backup and restore, reminders, widgets, permissions, and lifecycle
+changes need targeted coverage, with emulator testing when device behavior is
+involved.
+
+Keep unrelated refactors separate from behavior changes where practical. In
+the completion report, list exact commands and mark each check passed, failed,
+skipped, or blocked. Say whether tests actually ran; compilation alone is not a
+test pass. Report meaningful coverage gaps, and do not call a branch ready while
+a required check is failing or unrun.

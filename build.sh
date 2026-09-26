@@ -24,7 +24,6 @@ AVD_PREFIX="uhabitsTest"
 EMULATOR="${ANDROID_HOME}/emulator/emulator"
 GRADLE="./gradlew --stacktrace --quiet --console=plain"
 GRADLE_LOG="build/gradle-output.log"
-PACKAGE_NAME=org.isoron.uhabits
 SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
 VERSION=$(grep versionName uhabits-android/build.gradle.kts | sed -e 's/.*"\([^"]*\)".*/\1/g')
 ATTEMPTS=1
@@ -58,6 +57,14 @@ log_debug() {
 run() {
     log_debug "$*"
     "$@"
+}
+
+timestamp_output() {
+    if command -v ts >/dev/null 2>&1; then
+        ts "%.s"
+    else
+        awk '{ print systime(), $0; fflush() }'
+    fi
 }
 
 fail() {
@@ -102,12 +109,21 @@ check_cmd() {
     fi
 }
 
-check_cmd flock flock
-check_cmd timeout coreutils
-check_cmd ts moreutils
-check_cmd rsync rsync
-check_cmd pgrep ""
-check_cmd pkill ""
+case "${1:-}" in
+    android-setup)
+        check_cmd flock flock
+        check_cmd pgrep ""
+        check_cmd pkill ""
+        ;;
+    android-tests|android-tests-parallel)
+        check_cmd timeout coreutils
+        check_cmd pgrep ""
+        check_cmd pkill ""
+        ;;
+    android-accept-images)
+        check_cmd rsync rsync
+        ;;
+esac
 
 if [ $MISSING_DEPS -ne 0 ]; then
     exit 1
@@ -165,6 +181,7 @@ android_setup() {
                 --name $AVDNAME \
                 --package "system-images;android-$API;google_apis;$ARCH" \
                 --device "Nexus 4" || return 1
+        "$EMULATOR" -list-avds | grep -Fxq "$AVDNAME" || return 1
 
         flock -u 10
     ) 10>/tmp/uhabitsTest.lock
@@ -187,42 +204,43 @@ android_launch() {
 
     if pgrep -f "${AVDNAME}" > /dev/null; then
         log_info "Emulator already running (API $API), reusing..."
-        return 0
-    fi
+    else
+        log_info "Launching emulator (API $API)..."
+        local EMULATOR_LOG="build/emulator-${API}.log"
+        $EMULATOR \
+            -avd $AVDNAME \
+            -port $PORT \
+            -no-snapshot \
+            1>"$EMULATOR_LOG" 2>&1 &
 
-    log_info "Launching emulator (API $API)..."
-    local EMULATOR_LOG="build/emulator-${API}.log"
-    $EMULATOR \
-        -avd $AVDNAME \
-        -port $PORT \
-        -no-snapshot \
-        1>"$EMULATOR_LOG" 2>&1 &
+        log_info "Waiting for emulator to boot..."
+        timeout $BOOT_TIMEOUT $ADB wait-for-device shell \
+            'while [[ -z "$(getprop sys.boot_completed)" ]]; do sleep 1; done; input keyevent 82' &
+        local WAIT_PID=$!
 
-    log_info "Waiting for emulator to boot..."
-    timeout $BOOT_TIMEOUT $ADB wait-for-device shell \
-        'while [[ -z "$(getprop sys.boot_completed)" ]]; do sleep 1; done; input keyevent 82' &
-    local WAIT_PID=$!
+        while kill -0 $WAIT_PID 2>/dev/null; do
+            if grep -q "FATAL" "$EMULATOR_LOG" 2>/dev/null; then
+                log_error "Emulator crashed:"
+                grep "FATAL" "$EMULATOR_LOG"
+                kill $WAIT_PID 2>/dev/null
+                wait $WAIT_PID 2>/dev/null
+                return 1
+            fi
+            sleep 2
+        done
 
-    while kill -0 $WAIT_PID 2>/dev/null; do
-        if grep -q "FATAL" "$EMULATOR_LOG" 2>/dev/null; then
-            log_error "Emulator crashed:"
-            grep "FATAL" "$EMULATOR_LOG"
-            kill $WAIT_PID 2>/dev/null
-            wait $WAIT_PID 2>/dev/null
+        wait $WAIT_PID
+        if [ $? -ne 0 ]; then
+            log_error "Emulator failed to boot after $BOOT_TIMEOUT seconds."
             return 1
         fi
-        sleep 2
-    done
-
-    wait $WAIT_PID
-    if [ $? -ne 0 ]; then
-        log_error "Emulator failed to boot after $BOOT_TIMEOUT seconds."
-        return 1
     fi
 
-    log_info "Disabling animations..."
+    log_info "Preparing emulator..."
     run $ADB root || return 1
     sleep 5
+    run $ADB shell settings put global auto_time 0 || return 1
+    run $ADB shell settings put global auto_time_zone 0 || return 1
     run $ADB shell settings put global window_animation_scale 0 || return 1
     run $ADB shell settings put global transition_animation_scale 0 || return 1
     run $ADB shell settings put global animator_duration_scale 0 || return 1
@@ -231,22 +249,51 @@ android_launch() {
     run $ADB shell 'echo android-test > /sys/power/wake_lock' || return 1
 }
 
+apk_package() {
+    local apk=$1
+    local aapt_bin
+    if [ ! -f "$apk" ]; then
+        log_error "APK not found: $apk (run ./build.sh build first)"
+        return 1
+    fi
+    aapt_bin=$(find "${ANDROID_HOME}/build-tools" -name aapt -type f | sort -V | tail -1)
+    if [ -z "$aapt_bin" ]; then
+        log_error "Android build-tools aapt is missing"
+        return 1
+    fi
+    "$aapt_bin" dump badging "$apk" | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -1
+}
+
 # shellcheck disable=SC2016
 android_test() {
     API=$1
     AVDNAME=${AVD_PREFIX}${API}
+    local app_apk test_apk package_name test_package
+
+    if [ -n "$RELEASE" ]; then
+        app_apk="${ANDROID_OUTPUTS_DIR}/apk/release/uhabits-android-release.apk"
+    else
+        app_apk="${ANDROID_OUTPUTS_DIR}/apk/debug/uhabits-android-debug.apk"
+    fi
+    test_apk="${ANDROID_OUTPUTS_DIR}/apk/androidTest/debug/uhabits-android-debug-androidTest.apk"
+    package_name=$(apk_package "$app_apk") || return 1
+    test_package=$(apk_package "$test_apk") || return 1
+    if [ -z "$package_name" ] || [ "$test_package" != "$package_name.test" ]; then
+        log_error "Test APK $test_package does not target app $package_name; build matching APKs"
+        return 1
+    fi
 
     android_launch $API || return 1
 
     if [ -n "$RELEASE" ]; then
         log_info "Installing release APK..."
-        run $ADB install -r ${ANDROID_OUTPUTS_DIR}/apk/release/uhabits-android-release.apk || return 1
+        run $ADB install -r "$app_apk" || return 1
     else
         log_info "Installing debug APK..."
-        run $ADB install -t -r ${ANDROID_OUTPUTS_DIR}/apk/debug/uhabits-android-debug.apk || return 1
+        run $ADB install -t -r "$app_apk" || return 1
     fi
     log_info "Installing test APK..."
-    run $ADB install -r ${ANDROID_OUTPUTS_DIR}/apk/androidTest/debug/uhabits-android-debug-androidTest.apk || return 1
+    run $ADB install -r "$test_apk" || return 1
 
     for size in medium large; do
         OUT_INSTRUMENT=${ANDROID_OUTPUTS_DIR}/instrument-${API}.txt
@@ -256,8 +303,8 @@ android_test() {
             log_info "Running $size instrumented tests (attempt $i)..."
             $ADB shell am instrument \
                 -r -e coverage true -e size "$size" $FAILED_TESTS \
-                -w ${PACKAGE_NAME}.test/androidx.test.runner.AndroidJUnitRunner \
-                | ts "%.s" > "$OUT_INSTRUMENT"
+                -w ${test_package}/androidx.test.runner.AndroidJUnitRunner \
+                | timestamp_output > "$OUT_INSTRUMENT"
 
             FAILED_TESTS=$(tools/parseInstrument.py "$OUT_INSTRUMENT")
             SUCCESS=$?
@@ -271,10 +318,12 @@ android_test() {
             log_error "Some $size instrumented tests failed."
             log_error "Saving logcat: $OUT_LOGCAT..."
             $ADB logcat -d > $OUT_LOGCAT
-            log_error "Fetching test screenshots..."
-            rm -rf ${ANDROID_OUTPUTS_DIR}/test-screenshots
-            run $ADB pull /sdcard/Android/data/${PACKAGE_NAME}/files/test-screenshots ${ANDROID_OUTPUTS_DIR}/
-            run $ADB shell rm -r /sdcard/Android/data/${PACKAGE_NAME}/files/test-screenshots/
+            if $ADB shell test -d /sdcard/Android/data/${package_name}/files/test-screenshots; then
+                log_error "Fetching test screenshots..."
+                rm -rf ${ANDROID_OUTPUTS_DIR}/test-screenshots
+                run $ADB pull /sdcard/Android/data/${package_name}/files/test-screenshots ${ANDROID_OUTPUTS_DIR}/
+                run $ADB shell rm -r /sdcard/Android/data/${package_name}/files/test-screenshots/
+            fi
             return 1
         fi
     done
@@ -409,7 +458,7 @@ Options:
     -c      Remove build folders before building
     -k      Kill running emulator before tests (default: reuse if running)
     -n N    Number of test attempts per size (default: 1)
-    -r      Build and test release version, instead of debug
+    -r      Build release APK; device tests require a matching test APK
 END
 }
 

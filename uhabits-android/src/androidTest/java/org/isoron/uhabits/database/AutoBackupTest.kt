@@ -22,6 +22,7 @@ package org.isoron.uhabits.database
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import androidx.preference.PreferenceManager
+import androidx.test.filters.MediumTest
 import org.isoron.platform.time.DateUtils
 import org.isoron.uhabits.AndroidDirFinder
 import org.isoron.uhabits.BaseAndroidTest
@@ -29,6 +30,7 @@ import org.junit.Test
 import java.io.File
 import java.io.FileOutputStream
 
+@MediumTest
 class AutoBackupTest : BaseAndroidTest() {
     @Test
     fun testRun() {

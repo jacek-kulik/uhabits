@@ -29,6 +29,7 @@ import androidx.test.espresso.assertion.PositionAssertions
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
@@ -56,7 +57,10 @@ object CommonSteps : BaseUserInterfaceTest() {
     fun launchApp() {
         startActivity(ListHabitsActivity::class.java)
         assertTrue(
-            device.wait(Until.hasObject(By.pkg("org.isoron.uhabits")), 5000)
+            device.wait(
+                Until.hasObject(By.pkg(InstrumentationRegistry.getInstrumentation().targetContext.packageName)),
+                5000
+            )
         )
         device.waitForIdle()
     }

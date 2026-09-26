@@ -19,6 +19,7 @@
 package org.isoron.uhabits.database
 
 import android.database.sqlite.SQLiteDatabase
+import androidx.test.filters.MediumTest
 import org.isoron.platform.io.StepResult
 import org.isoron.platform.io.begin
 import org.isoron.platform.io.commit
@@ -31,6 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+@MediumTest
 class AndroidDatabaseTest : BaseAndroidTest() {
     private lateinit var db: AndroidDatabase
 

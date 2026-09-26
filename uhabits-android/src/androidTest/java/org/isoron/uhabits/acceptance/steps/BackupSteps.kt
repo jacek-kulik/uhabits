@@ -33,8 +33,18 @@ import org.isoron.uhabits.acceptance.steps.ListHabitsSteps.clickMenu
 import org.junit.Assert.assertTrue
 import java.io.File
 
-const val BACKUP_FOLDER = "/sdcard/Android/data/org.isoron.uhabits/files/Backups/"
 const val DOWNLOAD_FOLDER = "/sdcard/Download/"
+
+private fun backupFolder(): String {
+    val packageName = InstrumentationRegistry.getInstrumentation().targetContext.packageName
+    return "/sdcard/Android/data/$packageName/files/Backups/"
+}
+
+private fun backupFilenamePrefix(): String {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    val appName = context.applicationInfo.loadLabel(context.packageManager)
+    return "$appName Backup"
+}
 
 fun exportFullBackup() {
     clickMenu(SETTINGS)
@@ -50,17 +60,23 @@ fun clearDownloadFolder() {
 }
 
 fun clearBackupFolder() {
-    device.executeShellCommand("rm -rf $BACKUP_FOLDER")
+    device.executeShellCommand("rm -rf ${backupFolder()}")
 }
 
 fun copyBackupToDownloadFolder() {
-    val srcListing = device.executeShellCommand("ls $BACKUP_FOLDER")
-    assertTrue("Backup folder is empty. Contents: [$srcListing]", srcListing.contains("Loop Habits Backup"))
+    val srcListing = device.executeShellCommand("ls ${backupFolder()}")
+    assertTrue(
+        "Backup folder is empty. Contents: [$srcListing]",
+        srcListing.contains(backupFilenamePrefix())
+    )
     device.executeShellCommand("rm -rf $DOWNLOAD_FOLDER")
-    device.executeShellCommand("mv $BACKUP_FOLDER $DOWNLOAD_FOLDER")
+    device.executeShellCommand("mv ${backupFolder()} $DOWNLOAD_FOLDER")
     device.executeShellCommand("chown root $DOWNLOAD_FOLDER")
     val dstListing = device.executeShellCommand("ls $DOWNLOAD_FOLDER")
-    assertTrue("Backup not found in download folder. Contents: [$dstListing]", dstListing.contains("Loop Habits Backup"))
+    assertTrue(
+        "Backup not found in download folder. Contents: [$dstListing]",
+        dstListing.contains(backupFilenamePrefix())
+    )
 }
 
 fun selectPublicBackupFolder() {
@@ -93,7 +109,7 @@ fun importBackupFromDownloadFolder() {
         device.click(50, 90) // Click menu button
         device.findObject(UiSelector().textContains("Internal storage")).click()
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains("Loop")).click()
+        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
     } else if (SDK_INT <= 25) {
         while (!device.hasObject(By.textContains("Show file size"))) {
             device.click(720, 100) // Click overflow menu
@@ -108,23 +124,23 @@ fun importBackupFromDownloadFolder() {
         device.click(50, 90) // Click menu button
         device.findObject(UiSelector().textContains("Android")).click()
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains("Loop")).click()
+        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
     } else {
         device.click(50, 90) // Click menu button
         Thread.sleep(1000)
         device.findObject(UiSelector().textContains("Download")).click()
-        device.findObject(UiSelector().textContains("Loop")).click()
+        device.findObject(UiSelector().textContains(backupFilenamePrefix())).click()
     }
 }
 
 fun verifyBackupInDownloadFolder() {
     val listing = device.executeShellCommand("ls $DOWNLOAD_FOLDER")
-    assertTrue(listing.contains("Loop Habits Backup"))
+    assertTrue(listing.contains(backupFilenamePrefix()))
 }
 
 fun verifyBackupInBackupFolder() {
-    val listing = device.executeShellCommand("ls $BACKUP_FOLDER")
-    assertTrue(listing.contains("Loop Habits Backup"))
+    val listing = device.executeShellCommand("ls ${backupFolder()}")
+    assertTrue(listing.contains(backupFilenamePrefix()))
 }
 
 fun openLauncher() {
