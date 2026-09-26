@@ -43,7 +43,6 @@ class YearHeatmapView @JvmOverloads constructor(
     private val labelHeight = dp(20f)
     private var year = 0
     private var firstWeekday = DayOfWeek.SUNDAY
-    private var selectedMonth = 1
     private var days: Map<LocalDate, HabitDayCompletion> = emptyMap()
     private var onMonthSelected: ((Int) -> Unit)? = null
     var accentColor: Int = 0xff43a047.toInt()
@@ -58,13 +57,11 @@ class YearHeatmapView @JvmOverloads constructor(
         year: Int,
         days: List<HabitDayCompletion>,
         firstWeekday: DayOfWeek,
-        selectedMonth: Int,
         onMonthSelected: (Int) -> Unit
     ) {
         this.year = year
         this.days = days.associateBy { it.date }
         this.firstWeekday = firstWeekday
-        this.selectedMonth = selectedMonth
         this.onMonthSelected = onMonthSelected
         requestLayout()
         invalidate()
@@ -118,13 +115,6 @@ class YearHeatmapView @JvmOverloads constructor(
             paint.color = color
             val rect = RectF(left, top, left + cell, top + cell)
             canvas.drawRoundRect(rect, dp(2f), dp(2f), paint)
-            if (date.month == selectedMonth) {
-                paint.style = Paint.Style.STROKE
-                paint.strokeWidth = dp(1f)
-                paint.color = accentColor
-                canvas.drawRoundRect(rect, dp(2f), dp(2f), paint)
-                paint.style = Paint.Style.FILL
-            }
         }
     }
 
@@ -140,7 +130,6 @@ class YearHeatmapView @JvmOverloads constructor(
         val date = LocalDate(year, 1, 1).startOfWeek(firstWeekday)
             .plus(column * 7 + row)
         if (date.year == year) {
-            selectedMonth = date.month
             onMonthSelected?.invoke(date.month)
             invalidate()
         }

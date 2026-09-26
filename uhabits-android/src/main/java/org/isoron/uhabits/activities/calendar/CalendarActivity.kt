@@ -18,6 +18,7 @@
  */
 package org.isoron.uhabits.activities.calendar
 
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -58,6 +59,8 @@ class CalendarActivity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         toolbar.setTitle(R.string.calendar)
         toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
+        toolbar.setTitleTextColor(Color.WHITE)
+        toolbar.navigationIcon?.setTint(Color.WHITE)
         toolbar.setNavigationOnClickListener { finish() }
 
         yearLabel = findViewById(R.id.calendarYear)
@@ -65,6 +68,10 @@ class CalendarActivity : AppCompatActivity() {
         summary = findViewById(R.id.calendarSummary)
         yearHeatmap = findViewById(R.id.yearHeatmap)
         monthHeatmap = findViewById(R.id.monthHeatmap)
+        val navigationTextColor = themeSwitcher.currentTheme.highContrastTextColor.toInt()
+        listOf(R.id.previousYear, R.id.nextYear, R.id.previousMonth, R.id.nextMonth).forEach { id ->
+            findViewById<Button>(id).setTextColor(navigationTextColor)
+        }
         findViewById<Button>(R.id.previousYear).setOnClickListener {
             year--
             refresh()
@@ -109,7 +116,7 @@ class CalendarActivity : AppCompatActivity() {
         yearHeatmap.accentColor = accent
         yearHeatmap.emptyColor = empty
         yearHeatmap.textColor = text
-        yearHeatmap.setData(year, yearDays, firstWeekday, month) { selectedMonth ->
+        yearHeatmap.setData(year, yearDays, firstWeekday) { selectedMonth ->
             month = selectedMonth
             refreshMonth(habits, firstWeekday, accent, empty, text, today)
         }
