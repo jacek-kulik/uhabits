@@ -99,6 +99,7 @@ android {
         }
     }
     buildFeatures.viewBinding = true
+    buildFeatures.buildConfig = true
     lint.abortOnError = true
     lint.baseline = file("lint-baseline.xml")
 }

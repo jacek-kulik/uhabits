@@ -24,7 +24,7 @@ plugins {
 }
 
 kotlin {
-    jvm().withJava()
+    jvm()
     jvmToolchain(17)
 
     js(IR) {
@@ -42,7 +42,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(libs.kotlinx.coroutines.core)
-                compileOnly(libs.kotlin.inject.runtime)
+                api(libs.kotlin.inject.runtime)
             }
         }
 
